@@ -1,9 +1,9 @@
 [package]
 
 name = "stable_bst"
-version = "0.0.1"
+version = "0.0.2"
 license = "MIT/Apache-2.0"
-description = "An ordered map and set based on a binary search tree."
+description = "An ordered map and set based on a binary search tree. Works with stable Rust 1.9.0."
 
 authors = [
     "Alexis Beingessner <a.beingessner@gmail.com>",
@@ -12,7 +12,7 @@ authors = [
 ]
 
 repository = "https://github.com/rocallahan/stable-bst"
-documentation = "https://rocallahan.github.io/stable-bst/doc"
+documentation = "https://rocallahan.github.io/stable-bst/doc/stable_bst"
 keywords = ["data-structures"]
 readme = "README.md"
 
@@ -22,9 +22,9 @@ default = ["ordered_iter"]
 
 [dependencies]
 
-compare = "*"
-ordered_iter = { version = "*", optional=true }
+compare = "0.0"
+ordered_iter = { version = "0.1", optional=true }
 
 [dev-dependencies]
 
-rand = "*"
+rand = "0.3"
