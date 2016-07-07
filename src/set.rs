@@ -131,7 +131,6 @@ impl<T: Ord> TreeSet<T> {
     /// let mut set: TreeSet<i32> = TreeSet::new();
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn new() -> TreeSet<T> { TreeSet::with_comparator(natural()) }
 }
 
@@ -158,7 +157,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// }
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn iter(&self) -> Iter<T> {
         Iter { iter: self.map.iter() }
     }
@@ -195,7 +193,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(v, vec![1, 2, 3, 4, 5]);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn into_iter(self) -> IntoIter<T> {
         fn first<A, B>((a, _): (A, B)) -> A { a }
         let first: fn((T, ())) -> T = first; // coerce to fn pointer
@@ -263,7 +260,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// let diff: TreeSet<i32> = b.difference(&a).map(|&x| x).collect();
     /// assert_eq!(diff, [4, 5].iter().map(|&x| x).collect());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn difference<'a>(&'a self, other: &'a TreeSet<T, C>)
         -> Difference<'a, T, C> where C: Eq {
         assert!(self.comparator() == other.comparator());
@@ -295,7 +291,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(diff1, diff2);
     /// assert_eq!(diff1, [1, 2, 4, 5].iter().map(|&x| x).collect());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn symmetric_difference<'a>(&'a self, other: &'a TreeSet<T, C>)
         -> SymmetricDifference<'a, T, C> where C: Eq {
         assert!(self.comparator() == other.comparator());
@@ -324,7 +319,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// let diff: TreeSet<i32> = a.intersection(&b).map(|&x| x).collect();
     /// assert_eq!(diff, [2, 3].iter().map(|&x| x).collect());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn intersection<'a>(&'a self, other: &'a TreeSet<T, C>)
         -> Intersection<'a, T, C> where C: Eq {
         assert!(self.comparator() == other.comparator());
@@ -353,7 +347,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// let diff: TreeSet<i32> = a.union(&b).map(|&x| x).collect();
     /// assert_eq!(diff, [1, 2, 3, 4, 5].iter().map(|&x| x).collect());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn union<'a>(&'a self, other: &'a TreeSet<T, C>) -> Union<'a, T, C>
         where C: Eq {
         assert!(self.comparator() == other.comparator());
@@ -377,7 +370,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(v.len(), 1);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn len(&self) -> usize { self.map.len() }
 
     /// Returns true if the set contains no elements
@@ -392,7 +384,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// v.insert(1);
     /// assert!(!v.is_empty());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn is_empty(&self) -> bool { self.len() == 0 }
 
     /// Clears the set, removing all values.
@@ -408,7 +399,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert!(v.is_empty());
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn clear(&mut self) { self.map.clear() }
 
     /// Returns `true` if the set contains a value.
@@ -427,7 +417,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(set.contains(&4), false);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn contains<Q: ?Sized>(&self, value: &Q) -> bool
         where C: Compare<Q, T>
     {
@@ -451,7 +440,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// b.insert(1);
     /// assert_eq!(a.is_disjoint(&b), false);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn is_disjoint(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
         self.intersection(other).next().is_none()
     }
@@ -472,7 +460,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// set.insert(4);
     /// assert_eq!(set.is_subset(&sup), false);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn is_subset(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
         assert!(self.comparator() == other.comparator());
         let mut x = self.iter();
@@ -517,7 +504,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// set.insert(2);
     /// assert_eq!(set.is_superset(&sub), true);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn is_superset(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
         other.is_subset(self)
     }
@@ -537,7 +523,6 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(set.len(), 1);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn insert(&mut self, value: T) -> bool { self.map.insert(value, ()).is_none() }
 
     /// Removes a value from the set. Returns `true` if the value was
@@ -559,8 +544,7 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(set.remove(&2), false);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
-    pub fn remove<Q: ?Sized>(&mut self, value: &Q) -> bool
+    fn remove<Q: ?Sized>(&mut self, value: &Q) -> bool
         where C: Compare<Q, T>
     {
         self.map.remove(value).is_some()
@@ -695,7 +679,6 @@ impl<'a, T, C> Iterator for Union<'a, T, C> where C: Compare<T> {
     }
 }
 
-#[unstable = "matches collection reform specification, waiting for dust to settle"]
 impl<'a, 'b, T, C> ops::BitOr<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     where T: Clone, C: Compare<T> + Eq + Clone {
 
@@ -723,7 +706,6 @@ impl<'a, 'b, T, C> ops::BitOr<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     }
 }
 
-#[unstable = "matches collection reform specification, waiting for dust to settle"]
 impl<'a, 'b, T, C> ops::BitAnd<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     where T: Clone, C: Compare<T> + Eq + Clone {
 
@@ -751,7 +733,6 @@ impl<'a, 'b, T, C> ops::BitAnd<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     }
 }
 
-#[unstable = "matches collection reform specification, waiting for dust to settle"]
 impl<'a, 'b, T, C> ops::BitXor<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     where T: Clone, C: Compare<T> + Eq + Clone {
 
@@ -779,7 +760,6 @@ impl<'a, 'b, T, C> ops::BitXor<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     }
 }
 
-#[unstable = "matches collection reform specification, waiting for dust to settle"]
 impl<'a, 'b, T, C> ops::Sub<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     where T: Clone, C: Compare<T> + Eq + Clone {
 

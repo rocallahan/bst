@@ -31,19 +31,11 @@
 //! }
 //! ```
 
-#![feature(box_patterns, box_syntax)]
-#![feature(core)]
-#![feature(unboxed_closures)]
-
-#![cfg_attr(test, feature(hash, test))]
-
 extern crate compare;
 
 #[cfg(feature = "ordered_iter")] extern crate ordered_iter;
 
 #[cfg(test)] extern crate rand;
-#[cfg(test)] extern crate test;
-#[cfg(test)] #[macro_use] mod bench;
 
 pub use map::TreeMap;
 pub use set::TreeSet;

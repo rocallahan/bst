@@ -197,7 +197,6 @@ impl<K: Ord, V> TreeMap<K, V> {
     /// use bst::TreeMap;
     /// let mut map: TreeMap<&str, i32> = TreeMap::new();
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn new() -> TreeMap<K, V> { TreeMap::with_comparator(natural()) }
 }
 
@@ -226,7 +225,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     ///     println!("{}", x);
     /// }
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn keys<'a>(&'a self) -> Keys<'a, K, V> {
         fn first<A, B>((a, _): (A, B)) -> A { a }
         let first: fn((&'a K, &'a V)) -> &'a K = first; // coerce to fn pointer
@@ -251,7 +249,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     ///     println!("{}", x);
     /// }
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn values<'a>(&'a self) -> Values<'a, K, V> {
         fn second<A, B>((_, b): (A, B)) -> B { b }
         let second: fn((&'a K, &'a V)) -> &'a V = second; // coerce to fn pointer
@@ -275,7 +272,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     ///     println!("{}: {}", key, value);
     /// }
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn iter(&self) -> Iter<K, V> {
         Iter {
             stack: vec![],
@@ -327,7 +323,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map.get(&"b"), Some(&12));
     /// assert_eq!(map.get(&"c"), Some(&3));
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn iter_mut(&mut self) -> IterMut<K, V> {
         IterMut {
             stack: vec![],
@@ -378,12 +373,11 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// let vec: Vec<(&str, i32)> = map.into_iter().collect();
     /// assert_eq!(vec, vec![("a", 1), ("b", 2), ("c", 3)]);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn into_iter(self) -> IntoIter<K, V> {
         let TreeMap { root, length, .. } = self;
         let stk = match root {
             None => vec![],
-            Some(box tn) => vec![tn]
+            Some(Box(tn)) => vec![tn]
         };
         IntoIter {
             stack: stk,
@@ -403,7 +397,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// a.insert(1, "a");
     /// assert_eq!(a.len(), 1);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn len(&self) -> usize { self.length }
 
     /// Return true if the map contains no elements.
@@ -418,7 +411,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// a.insert(1, "a");
     /// assert!(!a.is_empty());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     #[inline]
     pub fn is_empty(&self) -> bool { self.len() == 0 }
 
@@ -434,7 +426,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// a.clear();
     /// assert!(a.is_empty());
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn clear(&mut self) {
         self.root = None;
         self.length = 0
@@ -456,7 +447,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map.get(&2), None);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
         where C: Compare<Q, K>
     {
@@ -485,7 +475,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map.contains_key(&2), false);
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn contains_key<Q: ?Sized>(&self, key: &Q) -> bool
         where C: Compare<Q, K>
     {
@@ -511,7 +500,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map[&1], "b");
     /// ```
     #[inline]
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn get_mut<Q: ?Sized>(&mut self, key: &Q) -> Option<&mut V>
         where C: Compare<Q, K>
     {
@@ -540,7 +528,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map.insert(37, "c"), Some("b"));
     /// assert_eq!(map[&37], "c");
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         let ret = insert(&mut self.root, key, value, &self.cmp);
         if ret.is_none() { self.length += 1 }
@@ -563,7 +550,6 @@ impl<K, V, C> TreeMap<K, V, C> where C: Compare<K> {
     /// assert_eq!(map.remove(&1), Some("a"));
     /// assert_eq!(map.remove(&1), None);
     /// ```
-    #[unstable = "matches collection reform specification, waiting for dust to settle"]
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<V>
         where C: Compare<Q, K>
     {
@@ -1040,7 +1026,7 @@ impl<K, V> Iterator for IntoIter<K,V> {
             } = self.stack.pop().unwrap();
 
             match left {
-                Some(box left) => {
+                Some(Box(left)) => {
                     let n = TreeNode {
                         key: key,
                         value: value,
@@ -1053,7 +1039,7 @@ impl<K, V> Iterator for IntoIter<K,V> {
                 }
                 None => {
                     match right {
-                        Some(box right) => self.stack.push(right),
+                        Some(Box(right)) => self.stack.push(right),
                         None => ()
                     }
                     self.remaining -= 1;
@@ -1196,7 +1182,7 @@ fn insert<K, V, C>(node: &mut Option<Box<TreeNode<K, V>>>, key: K, value: V, cmp
         }
       }
       None => {
-       *node = Some(box TreeNode::new(key, value));
+       *node = Some(Box::new(TreeNode::new(key, value)));
         None
       }
     }
@@ -1240,13 +1226,13 @@ fn remove<K, V, C, Q: ?Sized>(node: &mut Option<Box<TreeNode<K, V>>>, key: &Q, c
                     (remove(&mut save.left, key, cmp), true)
                 } else {
                     let new = save.left.take().unwrap();
-                    let box TreeNode{value, ..} = replace(save, new);
+                    let Box(TreeNode{value, ..}) = replace(save, new);
                     *save = save.left.take().unwrap();
                     (Some(value), true)
                 }
             } else if save.right.is_some() {
                 let new = save.right.take().unwrap();
-                let box TreeNode{value, ..} = replace(save, new);
+                let Box(TreeNode{value, ..}) = replace(save, new);
                 (Some(value), true)
             } else {
                 (None, false)
@@ -1283,7 +1269,7 @@ fn remove<K, V, C, Q: ?Sized>(node: &mut Option<Box<TreeNode<K, V>>>, key: &Q, c
       }
     }
     return match node.take() {
-        Some(box TreeNode{value, ..}) => Some(value), None => panic!()
+        Some(Box(TreeNode{value, ..})) => Some(value), None => panic!()
     };
 }
 
@@ -1915,7 +1901,7 @@ mod test_treemap {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature="bench"))]
 mod bench {
     use rand::{weak_rng, Rng};
     use test::{Bencher, black_box};

@@ -1,6 +1,6 @@
 [package]
 
-name = "bst"
+name = "stable-bst"
 version = "0.0.1"
 license = "MIT/Apache-2.0"
 description = "An ordered map and set based on a binary search tree."
@@ -8,11 +8,11 @@ description = "An ordered map and set based on a binary search tree."
 authors = [
     "Alexis Beingessner <a.beingessner@gmail.com>",
     "Andrew Paseltiner <apaseltiner@gmail.com>",
+    "Robert O'Callahan <robert@ocallahan.org>",
 ]
 
-repository = "https://github.com/contain-rs/bst"
-homepage = "https://github.com/contain-rs/bst"
-documentation = "https://contain-rs.github.io/bst/bst"
+repository = "https://github.com/rocallahan/stable-bst"
+documentation = "https://rocallahan.github.io/stable-bst/doc"
 keywords = ["data-structures"]
 readme = "README.md"
 
@@ -23,10 +23,7 @@ default = ["ordered_iter"]
 [dependencies]
 
 compare = "*"
-
-[dependencies.ordered_iter]
-
-optional = true
+ordered_iter = { version = "*", optional=true }
 
 [dev-dependencies]
 
