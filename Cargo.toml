@@ -1,6 +1,6 @@
 [package]
 
-name = "stable-bst"
+name = "stable_bst"
 version = "0.0.1"
 license = "MIT/Apache-2.0"
 description = "An ordered map and set based on a binary search tree."

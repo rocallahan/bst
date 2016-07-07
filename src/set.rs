@@ -26,7 +26,7 @@ use super::map::{self, TreeMap};
 /// # Examples
 ///
 /// ```{rust}
-/// use bst::TreeSet;
+/// use stable_bst::TreeSet;
 ///
 /// let mut set = TreeSet::new();
 ///
@@ -48,7 +48,7 @@ use super::map::{self, TreeMap};
 /// A `TreeSet` can also be used with a custom ordering:
 ///
 /// ```rust
-/// use bst::TreeSet;
+/// use stable_bst::TreeSet;
 ///
 /// struct Troll<'a> {
 ///     name: &'a str,
@@ -137,7 +137,7 @@ impl<T: Ord> TreeSet<T> {
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let mut set: TreeSet<i32> = TreeSet::new();
     /// ```
     #[inline]
@@ -164,7 +164,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let set: TreeSet<i32> = [1, 4, 3, 5, 2].iter().map(|&x| x).collect();
     ///
     /// // Will print in ascending order.
@@ -182,7 +182,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let set: TreeSet<i32> = [1, 4, 3, 5, 2].iter().map(|&x| x).collect();
     ///
     /// // Will print in descending order.
@@ -201,7 +201,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let set: TreeSet<i32> = [1, 4, 3, 5, 2].iter().map(|&x| x).collect();
     ///
     /// // Not possible with a regular `.iter()`
@@ -224,7 +224,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let set: TreeSet<i32> = [2, 4, 6, 8].iter().map(|&x| x).collect();
     ///
     /// assert_eq!(set.lower_bound(&4).next(), Some(&4));
@@ -243,7 +243,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     /// let set: TreeSet<i32> = [2, 4, 6, 8].iter().map(|&x| x).collect();
     ///
     /// assert_eq!(set.upper_bound(&4).next(), Some(&6));
@@ -260,7 +260,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let b: TreeSet<i32> = [3, 4, 5].iter().map(|&x| x).collect();
@@ -294,7 +294,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let b: TreeSet<i32> = [3, 4, 5].iter().map(|&x| x).collect();
@@ -328,7 +328,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let b: TreeSet<i32> = [2, 3, 4].iter().map(|&x| x).collect();
@@ -357,7 +357,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let b: TreeSet<i32> = [3, 4, 5].iter().map(|&x| x).collect();
@@ -386,7 +386,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let mut v = TreeSet::new();
     /// assert_eq!(v.len(), 0);
@@ -403,7 +403,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let mut v = TreeSet::new();
     /// assert!(v.is_empty());
@@ -419,7 +419,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let mut v = TreeSet::new();
     /// v.insert(1);
@@ -440,7 +440,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let set: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// assert_eq!(set.contains(&1), true);
@@ -459,7 +459,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let mut b: TreeSet<i32> = TreeSet::new();
@@ -481,7 +481,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let sup: TreeSet<i32> = [1, 2, 3].iter().map(|&x| x).collect();
     /// let mut set: TreeSet<i32> = TreeSet::new();
@@ -524,7 +524,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let sub: TreeSet<i32> = [1, 2].iter().map(|&x| x).collect();
     /// let mut set: TreeSet<i32> = TreeSet::new();
@@ -550,7 +550,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let mut set = TreeSet::new();
     ///
@@ -573,7 +573,7 @@ impl<T, C> TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let mut set = TreeSet::new();
     ///
@@ -776,7 +776,7 @@ impl<'a, 'b, T, C> ops::BitOr<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = vec![1, 2, 3].into_iter().collect();
     /// let b: TreeSet<i32> = vec![3, 4, 5].into_iter().collect();
@@ -804,7 +804,7 @@ impl<'a, 'b, T, C> ops::BitAnd<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = vec![1, 2, 3].into_iter().collect();
     /// let b: TreeSet<i32> = vec![2, 3, 4].into_iter().collect();
@@ -832,7 +832,7 @@ impl<'a, 'b, T, C> ops::BitXor<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = vec![1, 2, 3].into_iter().collect();
     /// let b: TreeSet<i32> = vec![3, 4, 5].into_iter().collect();
@@ -860,7 +860,7 @@ impl<'a, 'b, T, C> ops::Sub<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeSet;
+    /// use stable_bst::TreeSet;
     ///
     /// let a: TreeSet<i32> = vec![1, 2, 3].into_iter().collect();
     /// let b: TreeSet<i32> = vec![3, 4, 5].into_iter().collect();
@@ -935,8 +935,15 @@ impl<'a, K> ::ordered_iter::OrderedSetIterator for Iter<'a, K> {}
 #[cfg(test)]
 mod test {
     use std::hash;
+    use std::hash::Hasher;
 
     use super::TreeSet;
+
+    fn hash<T: hash::Hash>(t: &T) -> u64 {
+        let mut s = hash::SipHasher::new();
+        t.hash(&mut s);
+        s.finish()
+    }
 
     #[test]
     fn test_clear() {
@@ -1087,33 +1094,11 @@ mod test {
         y.insert(2);
         y.insert(1);
 
-        assert!(hash::hash::<_, hash::SipHasher>(&x) == hash::hash::<_, hash::SipHasher>(&y));
-    }
-
-    struct Counter<'a, 'b> {
-        i: &'a mut usize,
-        expected: &'b [i32],
-    }
-
-    impl<'a, 'b, 'c> FnMut<(&'c i32,)> for Counter<'a, 'b> {
-        extern "rust-call" fn call_mut(&mut self, (&x,): (&'c i32,)) -> bool {
-            assert_eq!(x, self.expected[*self.i]);
-            *self.i += 1;
-            true
-        }
-    }
-
-    impl<'a, 'b, 'c> FnOnce<(&'c i32,)> for Counter<'a, 'b> {
-        type Output = bool;
-        extern "rust-call" fn call_once(self, (&x,): (&'c i32,)) -> bool {
-            assert_eq!(x, self.expected[*self.i]);
-            *self.i += 1;
-            true
-        }
+        assert!(hash(&x) == hash(&y));
     }
 
     fn check<F>(a: &[i32], b: &[i32], expected: &[i32], f: F)
-        where F: FnOnce(&TreeSet<i32>, &TreeSet<i32>, Counter) -> bool
+        where F: FnOnce(&TreeSet<i32>, &TreeSet<i32>) -> Vec<i32>
     {
         let mut set_a = TreeSet::new();
         let mut set_b = TreeSet::new();
@@ -1125,20 +1110,14 @@ mod test {
             assert!(set_b.insert(*y))
         }
 
-        let mut i = 0;
-        f(&set_a,
-          &set_b,
-          Counter {
-              i: &mut i,
-              expected: expected,
-          });
-        assert_eq!(i, expected.len());
+        let list = f(&set_a, &set_b);
+        assert_eq!(list, expected);
     }
 
     #[test]
     fn test_intersection() {
         fn check_intersection(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y, f| x.intersection(y).all(f))
+            check(a, b, expected, |x, y| x.intersection(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_intersection(&[], &[], &[]);
@@ -1154,7 +1133,7 @@ mod test {
     #[test]
     fn test_difference() {
         fn check_difference(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y, f| x.difference(y).all(f))
+            check(a, b, expected, |x, y| x.difference(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_difference(&[], &[], &[]);
@@ -1169,7 +1148,7 @@ mod test {
     #[test]
     fn test_symmetric_difference() {
         fn check_symmetric_difference(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y, f| x.symmetric_difference(y).all(f))
+            check(a, b, expected, |x, y| x.symmetric_difference(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_symmetric_difference(&[], &[], &[]);
@@ -1183,7 +1162,7 @@ mod test {
     #[test]
     fn test_union() {
         fn check_union(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y, f| x.union(y).all(f))
+            check(a, b, expected, |x, y| x.union(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_union(&[], &[], &[]);
@@ -1301,7 +1280,7 @@ mod test {
     fn test_comparator_borrowed() {
         use compare::{Compare, natural};
 
-        let mut m = TreeSet::with_comparator(natural().borrow());
+        let mut m = TreeSet::with_comparator(natural().borrowing());
 
         assert!(m.insert("a".to_string()));
 

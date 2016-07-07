@@ -30,7 +30,7 @@ use compare::{Compare, Natural, natural};
 /// # Examples
 ///
 /// ```rust
-/// use bst::TreeMap;
+/// use stable_bst::TreeMap;
 ///
 /// let mut map = TreeMap::new();
 ///
@@ -74,7 +74,8 @@ use compare::{Compare, Natural, natural};
 /// A `TreeMap` can also be used with a custom ordering:
 ///
 /// ```rust
-/// use bst::TreeMap;
+
+/// use stable_bst::TreeMap;
 ///
 /// struct Troll<'a> {
 ///     name: &'a str,
@@ -204,7 +205,7 @@ impl<K: Ord, V> TreeMap<K, V> {
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map: TreeMap<&str, i32> = TreeMap::new();
     /// ```
     pub fn new() -> TreeMap<K, V> {
@@ -234,7 +235,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -260,7 +261,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -285,7 +286,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -310,7 +311,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -331,7 +332,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -362,7 +363,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -387,7 +388,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     /// let mut map = TreeMap::new();
     /// map.insert("a", 1);
     /// map.insert("c", 3);
@@ -414,7 +415,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut a = TreeMap::new();
     /// assert_eq!(a.len(), 0);
@@ -430,7 +431,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut a = TreeMap::new();
     /// assert!(a.is_empty());
@@ -447,7 +448,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut a = TreeMap::new();
     /// a.insert(1, "a");
@@ -467,7 +468,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(1, "a");
@@ -499,7 +500,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(1, "a");
@@ -521,7 +522,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(1, "a");
@@ -554,7 +555,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// assert_eq!(map.insert(37, "a"), None);
@@ -581,7 +582,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(1, "a");
@@ -605,7 +606,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// fn get_headers() -> TreeMap<&'static str, &'static str> {
     ///     let mut result = TreeMap::new();
@@ -636,7 +637,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// let mut t = bst::TreeMap::new();
+    /// let mut t = stable_bst::TreeMap::new();
     /// t.insert("Content-Type", "application/xml");
     /// t.insert("User-Agent", "Curl-Rust/0.1");
     ///
@@ -717,7 +718,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(2, "a");
@@ -741,7 +742,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(2, "a");
@@ -780,7 +781,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(2, "a");
@@ -816,7 +817,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// # Examples
     ///
     /// ```rust
-    /// use bst::TreeMap;
+    /// use stable_bst::TreeMap;
     ///
     /// let mut map = TreeMap::new();
     /// map.insert(2, "a");
@@ -1958,7 +1959,7 @@ mod test_treemap {
     fn test_comparator_borrowed() {
         use compare::{Compare, natural};
 
-        let mut m = TreeMap::with_comparator(natural().borrow());
+        let mut m = TreeMap::with_comparator(natural().borrowing());
 
         assert!(m.insert("a".to_string(), 1).is_none());
 
