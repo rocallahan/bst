@@ -33,9 +33,11 @@
 
 extern crate compare;
 
-#[cfg(feature = "ordered_iter")] extern crate ordered_iter;
+#[cfg(feature = "ordered_iter")]
+extern crate ordered_iter;
 
-#[cfg(test)] extern crate rand;
+#[cfg(test)]
+extern crate rand;
 
 pub use map::TreeMap;
 pub use set::TreeSet;

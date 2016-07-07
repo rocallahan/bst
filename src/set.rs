@@ -75,13 +75,15 @@ use super::map::{self, TreeMap};
 /// ```
 #[derive(Clone)]
 pub struct TreeSet<T, C: Compare<T> = Natural<T>> {
-    map: TreeMap<T, (), C>
+    map: TreeMap<T, (), C>,
 }
 
 // FIXME: determine what `PartialEq` means for comparator-based `TreeSet`s
 impl<T: PartialEq + Ord> PartialEq for TreeSet<T> {
     #[inline]
-    fn eq(&self, other: &TreeSet<T>) -> bool { self.map == other.map }
+    fn eq(&self, other: &TreeSet<T>) -> bool {
+        self.map == other.map
+    }
 }
 
 // FIXME: determine what `Eq` means for comparator-based `TreeSet`s
@@ -99,16 +101,20 @@ impl<T: Ord> PartialOrd for TreeSet<T> {
 impl<T: Ord> Ord for TreeSet<T> {
     #[inline]
     fn cmp(&self, other: &TreeSet<T>) -> Ordering {
-        iter::order::cmp(self.iter(), other.iter())
+        self.iter().cmp(other)
     }
 }
 
-impl<T: Debug, C> Debug for TreeSet<T, C> where C: Compare<T> {
+impl<T: Debug, C> Debug for TreeSet<T, C>
+    where C: Compare<T>
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         try!(write!(f, "{{"));
 
         for (i, x) in self.iter().enumerate() {
-            if i != 0 { try!(write!(f, ", ")); }
+            if i != 0 {
+                try!(write!(f, ", "));
+            }
             try!(write!(f, "{:?}", *x));
         }
 
@@ -116,9 +122,13 @@ impl<T: Debug, C> Debug for TreeSet<T, C> where C: Compare<T> {
     }
 }
 
-impl<T, C> Default for TreeSet<T, C> where C: Compare<T> + Default {
+impl<T, C> Default for TreeSet<T, C>
+    where C: Compare<T> + Default
+{
     #[inline]
-    fn default() -> TreeSet<T, C> { TreeSet::with_comparator(Default::default()) }
+    fn default() -> TreeSet<T, C> {
+        TreeSet::with_comparator(Default::default())
+    }
 }
 
 impl<T: Ord> TreeSet<T> {
@@ -131,17 +141,23 @@ impl<T: Ord> TreeSet<T> {
     /// let mut set: TreeSet<i32> = TreeSet::new();
     /// ```
     #[inline]
-    pub fn new() -> TreeSet<T> { TreeSet::with_comparator(natural()) }
+    pub fn new() -> TreeSet<T> {
+        TreeSet::with_comparator(natural())
+    }
 }
 
-impl<T, C> TreeSet<T, C> where C: Compare<T> {
+impl<T, C> TreeSet<T, C>
+    where C: Compare<T>
+{
     /// Creates an empty `TreeSet` ordered according to the given comparator.
     pub fn with_comparator(cmp: C) -> TreeSet<T, C> {
         TreeSet { map: TreeMap::with_comparator(cmp) }
     }
 
     /// Returns the comparator according to which the `TreeSet` is ordered.
-    pub fn comparator(&self) -> &C { self.map.comparator() }
+    pub fn comparator(&self) -> &C {
+        self.map.comparator()
+    }
 
     /// Gets a lazy iterator over the values in the set, in ascending order.
     ///
@@ -194,7 +210,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// ```
     #[inline]
     pub fn into_iter(self) -> IntoIter<T> {
-        fn first<A, B>((a, _): (A, B)) -> A { a }
+        fn first<A, B>((a, _): (A, B)) -> A {
+            a
+        }
         let first: fn((T, ())) -> T = first; // coerce to fn pointer
 
         IntoIter(self.map.into_iter().map(first))
@@ -260,8 +278,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// let diff: TreeSet<i32> = b.difference(&a).map(|&x| x).collect();
     /// assert_eq!(diff, [4, 5].iter().map(|&x| x).collect());
     /// ```
-    pub fn difference<'a>(&'a self, other: &'a TreeSet<T, C>)
-        -> Difference<'a, T, C> where C: Eq {
+    pub fn difference<'a>(&'a self, other: &'a TreeSet<T, C>) -> Difference<'a, T, C>
+        where C: Eq
+    {
         assert!(self.comparator() == other.comparator());
         Difference {
             a: self.iter().peekable(),
@@ -291,8 +310,11 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(diff1, diff2);
     /// assert_eq!(diff1, [1, 2, 4, 5].iter().map(|&x| x).collect());
     /// ```
-    pub fn symmetric_difference<'a>(&'a self, other: &'a TreeSet<T, C>)
-        -> SymmetricDifference<'a, T, C> where C: Eq {
+    pub fn symmetric_difference<'a>(&'a self,
+                                    other: &'a TreeSet<T, C>)
+                                    -> SymmetricDifference<'a, T, C>
+        where C: Eq
+    {
         assert!(self.comparator() == other.comparator());
         SymmetricDifference {
             a: self.iter().peekable(),
@@ -319,8 +341,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// let diff: TreeSet<i32> = a.intersection(&b).map(|&x| x).collect();
     /// assert_eq!(diff, [2, 3].iter().map(|&x| x).collect());
     /// ```
-    pub fn intersection<'a>(&'a self, other: &'a TreeSet<T, C>)
-        -> Intersection<'a, T, C> where C: Eq {
+    pub fn intersection<'a>(&'a self, other: &'a TreeSet<T, C>) -> Intersection<'a, T, C>
+        where C: Eq
+    {
         assert!(self.comparator() == other.comparator());
         Intersection {
             a: self.iter().peekable(),
@@ -348,7 +371,8 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(diff, [1, 2, 3, 4, 5].iter().map(|&x| x).collect());
     /// ```
     pub fn union<'a>(&'a self, other: &'a TreeSet<T, C>) -> Union<'a, T, C>
-        where C: Eq {
+        where C: Eq
+    {
         assert!(self.comparator() == other.comparator());
         Union {
             a: self.iter().peekable(),
@@ -370,7 +394,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(v.len(), 1);
     /// ```
     #[inline]
-    pub fn len(&self) -> usize { self.map.len() }
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
 
     /// Returns true if the set contains no elements
     ///
@@ -384,7 +410,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// v.insert(1);
     /// assert!(!v.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     /// Clears the set, removing all values.
     ///
@@ -399,7 +427,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert!(v.is_empty());
     /// ```
     #[inline]
-    pub fn clear(&mut self) { self.map.clear() }
+    pub fn clear(&mut self) {
+        self.map.clear()
+    }
 
     /// Returns `true` if the set contains a value.
     ///
@@ -440,7 +470,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// b.insert(1);
     /// assert_eq!(a.is_disjoint(&b), false);
     /// ```
-    pub fn is_disjoint(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
+    pub fn is_disjoint(&self, other: &TreeSet<T, C>) -> bool
+        where C: Eq
+    {
         self.intersection(other).next().is_none()
     }
 
@@ -460,7 +492,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// set.insert(4);
     /// assert_eq!(set.is_subset(&sup), false);
     /// ```
-    pub fn is_subset(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
+    pub fn is_subset(&self, other: &TreeSet<T, C>) -> bool
+        where C: Eq
+    {
         assert!(self.comparator() == other.comparator());
         let mut x = self.iter();
         let mut y = other.iter();
@@ -477,7 +511,7 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
             match self.comparator().compare(b1, a1) {
                 Less => (),
                 Greater => return false,
-                Equal  => a = x.next(),
+                Equal => a = x.next(),
             }
 
             b = y.next();
@@ -504,7 +538,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// set.insert(2);
     /// assert_eq!(set.is_superset(&sub), true);
     /// ```
-    pub fn is_superset(&self, other: &TreeSet<T, C>) -> bool where C: Eq {
+    pub fn is_superset(&self, other: &TreeSet<T, C>) -> bool
+        where C: Eq
+    {
         other.is_subset(self)
     }
 
@@ -523,7 +559,9 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(set.len(), 1);
     /// ```
     #[inline]
-    pub fn insert(&mut self, value: T) -> bool { self.map.insert(value, ()).is_none() }
+    pub fn insert(&mut self, value: T) -> bool {
+        self.map.insert(value, ()).is_none()
+    }
 
     /// Removes a value from the set. Returns `true` if the value was
     /// present in the set.
@@ -544,7 +582,7 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
     /// assert_eq!(set.remove(&2), false);
     /// ```
     #[inline]
-    fn remove<Q: ?Sized>(&mut self, value: &Q) -> bool
+    pub fn remove<Q: ?Sized>(&mut self, value: &Q) -> bool
         where C: Compare<Q, T>
     {
         self.map.remove(value).is_some()
@@ -552,52 +590,56 @@ impl<T, C> TreeSet<T, C> where C: Compare<T> {
 }
 
 /// A lazy forward iterator over a set.
-pub struct Iter<'a, T:'a> {
-    iter: map::Iter<'a, T, ()>
+pub struct Iter<'a, T: 'a> {
+    iter: map::Iter<'a, T, ()>,
 }
 
 /// A lazy backward iterator over a set.
-pub struct RevIter<'a, T:'a> {
-    iter: map::RevIter<'a, T, ()>
+pub struct RevIter<'a, T: 'a> {
+    iter: map::RevIter<'a, T, ()>,
 }
 
 /// A lazy forward iterator over a set that consumes the set while iterating.
 pub struct IntoIter<T>(iter::Map<map::IntoIter<T, ()>, fn((T, ())) -> T>);
 
 /// A lazy iterator producing elements in the set difference (in-order).
-pub struct Difference<'a, T:'a, C:'a> {
+pub struct Difference<'a, T: 'a, C: 'a> {
     a: Peekable<Iter<'a, T>>,
     b: Peekable<Iter<'a, T>>,
     cmp: &'a C,
 }
 
 /// A lazy iterator producing elements in the set symmetric difference (in-order).
-pub struct SymmetricDifference<'a, T:'a, C:'a> {
+pub struct SymmetricDifference<'a, T: 'a, C: 'a> {
     a: Peekable<Iter<'a, T>>,
     b: Peekable<Iter<'a, T>>,
     cmp: &'a C,
 }
 
 /// A lazy iterator producing elements in the set intersection (in-order).
-pub struct Intersection<'a, T:'a, C:'a> {
+pub struct Intersection<'a, T: 'a, C: 'a> {
     a: Peekable<Iter<'a, T>>,
     b: Peekable<Iter<'a, T>>,
     cmp: &'a C,
 }
 
 /// A lazy iterator producing elements in the set union (in-order).
-pub struct Union<'a, T:'a, C:'a> {
+pub struct Union<'a, T: 'a, C: 'a> {
     a: Peekable<Iter<'a, T>>,
     b: Peekable<Iter<'a, T>>,
     cmp: &'a C,
 }
 
 /// Compare `x` and `y`, but return `short` if x is None and `long` if y is None
-fn cmp_opt<T, C: Compare<T>>(x: Option<& &T>, y: Option<& &T>,
-                        short: Ordering, long: Ordering, cmp: &C) -> Ordering {
+fn cmp_opt<T, C: Compare<T>>(x: Option<&&T>,
+                             y: Option<&&T>,
+                             short: Ordering,
+                             long: Ordering,
+                             cmp: &C)
+                             -> Ordering {
     match (x, y) {
-        (None    , _       ) => short,
-        (_       , None    ) => long,
+        (None, _) => short,
+        (_, None) => long,
         (Some(x1), Some(y1)) => cmp.compare(*x1, *y1),
     }
 }
@@ -605,74 +647,118 @@ fn cmp_opt<T, C: Compare<T>>(x: Option<& &T>, y: Option<& &T>,
 
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
-    #[inline] fn next(&mut self) -> Option<&'a T> { self.iter.next().map(|(value, _)| value) }
-    #[inline] fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    #[inline]
+    fn next(&mut self) -> Option<&'a T> {
+        self.iter.next().map(|(value, _)| value)
+    }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 impl<'a, T> Iterator for RevIter<'a, T> {
     type Item = &'a T;
-    #[inline] fn next(&mut self) -> Option<&'a T> { self.iter.next().map(|(value, _)| value) }
-    #[inline] fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    #[inline]
+    fn next(&mut self) -> Option<&'a T> {
+        self.iter.next().map(|(value, _)| value)
+    }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 impl<T> Iterator for IntoIter<T> {
     type Item = T;
-    #[inline] fn next(&mut self) -> Option<T> { self.0.next() }
-    #[inline] fn size_hint(&self) -> (usize, Option<usize>) { self.0.size_hint() }
+    #[inline]
+    fn next(&mut self) -> Option<T> {
+        self.0.next()
+    }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
 }
 
-impl<'a, T, C> Iterator for Difference<'a, T, C> where C: Compare<T> {
+impl<'a, T, C> Iterator for Difference<'a, T, C>
+    where C: Compare<T>
+{
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         loop {
             match cmp_opt(self.a.peek(), self.b.peek(), Less, Less, self.cmp) {
-                Less    => return self.a.next(),
-                Equal   => { self.a.next(); self.b.next(); }
-                Greater => { self.b.next(); }
+                Less => return self.a.next(),
+                Equal => {
+                    self.a.next();
+                    self.b.next();
+                }
+                Greater => {
+                    self.b.next();
+                }
             }
         }
     }
 }
 
-impl<'a, T, C> Iterator for SymmetricDifference<'a, T, C> where C: Compare<T> {
+impl<'a, T, C> Iterator for SymmetricDifference<'a, T, C>
+    where C: Compare<T>
+{
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         loop {
             match cmp_opt(self.a.peek(), self.b.peek(), Greater, Less, self.cmp) {
-                Less    => return self.a.next(),
-                Equal   => { self.a.next(); self.b.next(); }
+                Less => return self.a.next(),
+                Equal => {
+                    self.a.next();
+                    self.b.next();
+                }
                 Greater => return self.b.next(),
             }
         }
     }
 }
 
-impl<'a, T, C> Iterator for Intersection<'a, T, C> where C: Compare<T> {
+impl<'a, T, C> Iterator for Intersection<'a, T, C>
+    where C: Compare<T>
+{
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         loop {
             let o_cmp = match (self.a.peek(), self.b.peek()) {
-                (None    , _       ) => None,
-                (_       , None    ) => None,
+                (None, _) => None,
+                (_, None) => None,
                 (Some(a1), Some(b1)) => Some(self.cmp.compare(*a1, *b1)),
             };
             match o_cmp {
-                None          => return None,
-                Some(Less)    => { self.a.next(); }
-                Some(Equal)   => { self.b.next(); return self.a.next() }
-                Some(Greater) => { self.b.next(); }
+                None => return None,
+                Some(Less) => {
+                    self.a.next();
+                }
+                Some(Equal) => {
+                    self.b.next();
+                    return self.a.next();
+                }
+                Some(Greater) => {
+                    self.b.next();
+                }
             }
         }
     }
 }
 
-impl<'a, T, C> Iterator for Union<'a, T, C> where C: Compare<T> {
+impl<'a, T, C> Iterator for Union<'a, T, C>
+    where C: Compare<T>
+{
     type Item = &'a T;
     fn next(&mut self) -> Option<&'a T> {
         loop {
             match cmp_opt(self.a.peek(), self.b.peek(), Greater, Less, self.cmp) {
-                Less    => return self.a.next(),
-                Equal   => { self.b.next(); return self.a.next() }
+                Less => return self.a.next(),
+                Equal => {
+                    self.b.next();
+                    return self.a.next();
+                }
                 Greater => return self.b.next(),
             }
         }
@@ -680,8 +766,9 @@ impl<'a, T, C> Iterator for Union<'a, T, C> where C: Compare<T> {
 }
 
 impl<'a, 'b, T, C> ops::BitOr<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
-    where T: Clone, C: Compare<T> + Eq + Clone {
-
+    where T: Clone,
+          C: Compare<T> + Eq + Clone
+{
     type Output = TreeSet<T, C>;
 
     /// Returns the union of `self` and `rhs` as a new `TreeSet<T, C>`.
@@ -707,8 +794,9 @@ impl<'a, 'b, T, C> ops::BitOr<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
 }
 
 impl<'a, 'b, T, C> ops::BitAnd<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
-    where T: Clone, C: Compare<T> + Eq + Clone {
-
+    where T: Clone,
+          C: Compare<T> + Eq + Clone
+{
     type Output = TreeSet<T, C>;
 
     /// Returns the intersection of `self` and `rhs` as a new `TreeSet<T, C>`.
@@ -734,8 +822,9 @@ impl<'a, 'b, T, C> ops::BitAnd<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
 }
 
 impl<'a, 'b, T, C> ops::BitXor<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
-    where T: Clone, C: Compare<T> + Eq + Clone {
-
+    where T: Clone,
+          C: Compare<T> + Eq + Clone
+{
     type Output = TreeSet<T, C>;
 
     /// Returns the symmetric difference of `self` and `rhs` as a new `TreeSet<T, C>`.
@@ -761,8 +850,9 @@ impl<'a, 'b, T, C> ops::BitXor<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
 }
 
 impl<'a, 'b, T, C> ops::Sub<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
-    where T: Clone, C: Compare<T> + Eq + Clone {
-
+    where T: Clone,
+          C: Compare<T> + Eq + Clone
+{
     type Output = TreeSet<T, C>;
 
     /// Returns the difference of `self` and `rhs` as a new `TreeSet<T, C>`.
@@ -787,17 +877,21 @@ impl<'a, 'b, T, C> ops::Sub<&'b TreeSet<T, C>> for &'a TreeSet<T, C>
     }
 }
 
-impl<T, C> iter::FromIterator<T> for TreeSet<T, C> where C: Compare<T> + Default {
-    fn from_iter<Iter: IntoIterator<Item=T>>(iter: Iter) -> TreeSet<T, C> {
+impl<T, C> iter::FromIterator<T> for TreeSet<T, C>
+    where C: Compare<T> + Default
+{
+    fn from_iter<Iter: IntoIterator<Item = T>>(iter: Iter) -> TreeSet<T, C> {
         let mut set: TreeSet<T, C> = Default::default();
         set.extend(iter);
         set
     }
 }
 
-impl<T, C> Extend<T> for TreeSet<T, C> where C: Compare<T> {
+impl<T, C> Extend<T> for TreeSet<T, C>
+    where C: Compare<T>
+{
     #[inline]
-    fn extend<Iter: IntoIterator<Item=T>>(&mut self, iter: Iter) {
+    fn extend<Iter: IntoIterator<Item = T>>(&mut self, iter: Iter) {
         for elem in iter {
             self.insert(elem);
         }
@@ -805,7 +899,9 @@ impl<T, C> Extend<T> for TreeSet<T, C> where C: Compare<T> {
 }
 
 
-impl<T: Hash, C> Hash for TreeSet<T, C> where C: Compare<T> {
+impl<T: Hash, C> Hash for TreeSet<T, C>
+    where C: Compare<T>
+{
     fn hash<H: Hasher>(&self, state: &mut H) {
         for elt in self.iter() {
             elt.hash(state);
@@ -813,16 +909,24 @@ impl<T: Hash, C> Hash for TreeSet<T, C> where C: Compare<T> {
     }
 }
 
-impl<'a, T, C> IntoIterator for &'a TreeSet<T, C> where C: Compare<T> {
+impl<'a, T, C> IntoIterator for &'a TreeSet<T, C>
+    where C: Compare<T>
+{
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
-    fn into_iter(self) -> Iter<'a, T> { self.iter() }
+    fn into_iter(self) -> Iter<'a, T> {
+        self.iter()
+    }
 }
 
-impl<T, C> IntoIterator for TreeSet<T, C> where C: Compare<T> {
+impl<T, C> IntoIterator for TreeSet<T, C>
+    where C: Compare<T>
+{
     type Item = T;
     type IntoIter = IntoIter<T>;
-    fn into_iter(self) -> IntoIter<T> { self.into_iter() }
+    fn into_iter(self) -> IntoIter<T> {
+        self.into_iter()
+    }
 }
 
 #[cfg(feature="ordered_iter")]
@@ -946,7 +1050,7 @@ mod test {
 
     #[test]
     fn test_move_iter_size_hint() {
-        let s: TreeSet<i32> = vec!(0, 1).into_iter().collect();
+        let s: TreeSet<i32> = vec![0, 1].into_iter().collect();
 
         let mut it = s.into_iter();
 
@@ -962,28 +1066,28 @@ mod test {
 
     #[test]
     fn test_clone_eq() {
-      let mut m = TreeSet::new();
+        let mut m = TreeSet::new();
 
-      m.insert(1);
-      m.insert(2);
+        m.insert(1);
+        m.insert(2);
 
-      assert!(m.clone() == m);
+        assert!(m.clone() == m);
     }
 
     #[test]
     fn test_hash() {
-      let mut x = TreeSet::new();
-      let mut y = TreeSet::new();
+        let mut x = TreeSet::new();
+        let mut y = TreeSet::new();
 
-      x.insert(1);
-      x.insert(2);
-      x.insert(3);
+        x.insert(1);
+        x.insert(2);
+        x.insert(3);
 
-      y.insert(3);
-      y.insert(2);
-      y.insert(1);
+        y.insert(3);
+        y.insert(2);
+        y.insert(1);
 
-      assert!(hash::hash::<_, hash::SipHasher>(&x) == hash::hash::<_, hash::SipHasher>(&y));
+        assert!(hash::hash::<_, hash::SipHasher>(&x) == hash::hash::<_, hash::SipHasher>(&y));
     }
 
     struct Counter<'a, 'b> {
@@ -1008,18 +1112,26 @@ mod test {
         }
     }
 
-    fn check<F>(a: &[i32], b: &[i32], expected: &[i32], f: F) where
-        // FIXME Replace `Counter` with `Box<FnMut(&i32) -> bool>`
-        F: FnOnce(&TreeSet<i32>, &TreeSet<i32>, Counter) -> bool,
+    fn check<F>(a: &[i32], b: &[i32], expected: &[i32], f: F)
+        where F: FnOnce(&TreeSet<i32>, &TreeSet<i32>, Counter) -> bool
     {
         let mut set_a = TreeSet::new();
         let mut set_b = TreeSet::new();
 
-        for x in a.iter() { assert!(set_a.insert(*x)) }
-        for y in b.iter() { assert!(set_b.insert(*y)) }
+        for x in a.iter() {
+            assert!(set_a.insert(*x))
+        }
+        for y in b.iter() {
+            assert!(set_b.insert(*y))
+        }
 
         let mut i = 0;
-        f(&set_a, &set_b, Counter { i: &mut i, expected: expected });
+        f(&set_a,
+          &set_b,
+          Counter {
+              i: &mut i,
+              expected: expected,
+          });
         assert_eq!(i, expected.len());
     }
 
@@ -1048,9 +1160,7 @@ mod test {
         check_difference(&[], &[], &[]);
         check_difference(&[1, 12], &[], &[1, 12]);
         check_difference(&[], &[1, 2, 3, 9], &[]);
-        check_difference(&[1, 3, 5, 9, 11],
-                         &[3, 9],
-                         &[1, 5, 11]);
+        check_difference(&[1, 3, 5, 9, 11], &[3, 9], &[1, 5, 11]);
         check_difference(&[-5, 11, 22, 33, 40, 42],
                          &[-12, -5, 14, 23, 34, 38, 39, 50],
                          &[11, 22, 33, 40, 42]);
@@ -1058,8 +1168,7 @@ mod test {
 
     #[test]
     fn test_symmetric_difference() {
-        fn check_symmetric_difference(a: &[i32], b: &[i32],
-                                      expected: &[i32]) {
+        fn check_symmetric_difference(a: &[i32], b: &[i32], expected: &[i32]) {
             check(a, b, expected, |x, y, f| x.symmetric_difference(y).all(f))
         }
 
@@ -1073,8 +1182,7 @@ mod test {
 
     #[test]
     fn test_union() {
-        fn check_union(a: &[i32], b: &[i32],
-                                      expected: &[i32]) {
+        fn check_union(a: &[i32], b: &[i32], expected: &[i32]) {
             check(a, b, expected, |x, y, f| x.union(y).all(f))
         }
 
