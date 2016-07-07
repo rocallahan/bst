@@ -847,10 +847,15 @@ impl<K, V, C> TreeMap<K, V, C>
 
 /// Lazy forward iterator over a map
 pub struct Iter<'a, K: 'a, V: 'a> {
+    // For each node |n| in the stack, we've visited all nodes before |n|'s
+    // subtree, but we have not yet visited |n| itself (i.e. we're working on
+    // |n|'s "before-self" subtree).
     stack: Vec<&'a TreeNode<K, V>>,
     // See the comment on IterMut; this is just to allow
     // code-sharing (for this immutable-values iterator it *could* very
     // well be Option<&'a TreeNode<K,V>>).
+    // We have visited all nodes before |node|'s subtree but not any nodes
+    // in |node|'s subtree.
     node: *const TreeNode<K, V>,
     remaining_min: usize,
     remaining_max: usize,
