@@ -879,116 +879,100 @@ pub struct Keys<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -
 /// TreeMap values iterator.
 pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a V>);
 
-
-// FIXME #5846 we want to be able to choose between &x and &mut x
-// (with many different `x`) below, so we need to optionally pass mut
-// as a tt, but the only thing we can do with a `tt` is pass them to
-// other macros, so this takes the `& <mutability> <operand>` token
-// sequence and forces their evaluation as an expression.
 macro_rules! addr { ($e:expr) => { $e }}
-// putting an optional mut into type signatures
-macro_rules! item { ($i:item) => { $i }}
 
-macro_rules! define_iterator {
-    ( ) => {
-        // private methods on the forward iterator (item!() for the
-        // addr_mut in the next_ return value)
-        item!(impl<'a, K, V> IterMut<'a, K, V> {
-            #[inline(always)]
-            fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
-                loop {
-                    if !self.node.is_null() {
-                        let node = unsafe {addr!(& mut *self.node)};
-                        {
-                            let next_node = if forward {
-                                addr!(& mut node.left)
-                            } else {
-                                addr!(& mut node.right)
-                            };
-                            self.node = deref_mut(next_node);
-                        }
-                        self.stack.push(node);
+impl<'a, K, V> IterMut<'a, K, V> {
+    #[inline(always)]
+    fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
+        loop {
+            if !self.node.is_null() {
+                let node = unsafe { addr!(&mut *self.node) };
+                {
+                    let next_node = if forward {
+                        addr!(&mut node.left)
                     } else {
-                        return self.stack.pop().map(|node| {
-                            let next_node = if forward {
-                                addr!(& mut node.right)
-                            } else {
-                                addr!(& mut node.left)
-                            };
-                            self.node = deref_mut(next_node);
-                            (&node.key, addr!(& mut node.value))
-                        });
-                    }
+                        addr!(&mut node.right)
+                    };
+                    self.node = deref_mut(next_node);
                 }
-            }
-
-            /// traverse_left, traverse_right and traverse_complete are
-            /// used to initialize Iter/IterMut
-            /// pointing to element inside tree structure.
-            ///
-            /// They should be used in following manner:
-            ///   - create iterator using TreeMap::[mut_]iter_for_traversal
-            ///   - find required node using `traverse_left`/`traverse_right`
-            ///     (current node is `Iter::node` field)
-            ///   - complete initialization with `traverse_complete`
-            ///
-            /// After this, iteration will start from `self.node`.  If
-            /// `self.node` is None iteration will start from last
-            /// node from which we traversed left.
-            #[inline]
-            fn traverse_left(&mut self) {
-                let node = unsafe {addr!(& mut *self.node)};
-                self.node = deref_mut(addr!(& mut node.left));
                 self.stack.push(node);
+            } else {
+                return self.stack.pop().map(|node| {
+                    let next_node = if forward {
+                        addr!(&mut node.right)
+                    } else {
+                        addr!(&mut node.left)
+                    };
+                    self.node = deref_mut(next_node);
+                    (&node.key, addr!(&mut node.value))
+                });
             }
-
-            #[inline]
-            fn traverse_right(&mut self) {
-                let node = unsafe {addr!(& mut *self.node)};
-                self.node = deref_mut(addr!(& mut node.right));
-            }
-
-            #[inline]
-            fn traverse_complete(&mut self) {
-                if !self.node.is_null() {
-                    unsafe {
-                        self.stack.push(addr!(& mut *self.node));
-                    }
-                    self.node = ptr::null_mut();
-                }
-            }
-        });
-
-        // the forward Iterator impl.
-        item!(impl<'a, K, V> Iterator for IterMut<'a, K, V> {
-            type Item = (&'a K, &'a mut V);
-            /// Advances the iterator to the next node (in order) and return a
-            /// tuple with a reference to the key and value. If there are no
-            /// more nodes, return `None`.
-            fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
-                self.next_(true)
-            }
-
-            #[inline]
-            fn size_hint(&self) -> (usize, Option<usize>) {
-                (0, None)
-            }
-        });
-
-        // the reverse Iterator impl.
-        item!(impl<'a, K, V> Iterator for RevIterMut<'a, K, V> {
-            type Item = (&'a K, &'a mut V);
-            fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
-                self.iter.next_(false)
-            }
-
-            #[inline]
-            fn size_hint(&self) -> (usize, Option<usize>) {
-                self.iter.size_hint()
-            }
-        });
+        }
     }
-} // end of define_iterator
+
+    /// traverse_left, traverse_right and traverse_complete are
+    /// used to initialize Iter/IterMut
+    /// pointing to element inside tree structure.
+    ///
+    /// They should be used in following manner:
+    ///   - create iterator using TreeMap::[mut_]iter_for_traversal
+    ///   - find required node using `traverse_left`/`traverse_right`
+    ///     (current node is `Iter::node` field)
+    ///   - complete initialization with `traverse_complete`
+    ///
+    /// After this, iteration will start from `self.node`.  If
+    /// `self.node` is None iteration will start from last
+    /// node from which we traversed left.
+    #[inline]
+    fn traverse_left(&mut self) {
+        let node = unsafe { addr!(&mut *self.node) };
+        self.node = deref_mut(addr!(&mut node.left));
+        self.stack.push(node);
+    }
+
+    #[inline]
+    fn traverse_right(&mut self) {
+        let node = unsafe { addr!(&mut *self.node) };
+        self.node = deref_mut(addr!(&mut node.right));
+    }
+
+    #[inline]
+    fn traverse_complete(&mut self) {
+        if !self.node.is_null() {
+            unsafe {
+                self.stack.push(addr!(&mut *self.node));
+            }
+            self.node = ptr::null_mut();
+        }
+    }
+}
+
+impl<'a, K, V> Iterator for IterMut<'a, K, V> {
+    type Item = (&'a K, &'a mut V);
+    /// Advances the iterator to the next node (in order) and return a
+    /// tuple with a reference to the key and value. If there are no
+    /// more nodes, return `None`.
+    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
+        self.next_(true)
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, None)
+    }
+}
+
+impl<'a, K, V> Iterator for RevIterMut<'a, K, V> {
+    type Item = (&'a K, &'a mut V);
+    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
+        self.iter.next_(false)
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
 
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
     type Item = (&'a K, &'a V);
@@ -1019,8 +1003,6 @@ impl<'a, K, V> Iterator for RevIter<'a, K, V> {
         self.iter.size_hint()
     }
 }
-
-define_iterator!{}
 
 fn deref_mut<K, V>(x: &mut Option<Box<TreeNode<K, V>>>) -> *mut TreeNode<K, V> {
     match *x {
