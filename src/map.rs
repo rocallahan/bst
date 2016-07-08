@@ -892,9 +892,6 @@ macro_rules! item { ($i:item) => { $i }}
 macro_rules! define_iterator {
     ($name:ident,
      $rev_name:ident,
-
-     // the function to go from &m Option<Box<TreeNode>> to *m TreeNode
-     deref = $deref:ident,
      ) => {
         // private methods on the forward iterator (item!() for the
         // addr_mut in the next_ return value)
@@ -910,7 +907,7 @@ macro_rules! define_iterator {
                             } else {
                                 addr!(& mut node.right)
                             };
-                            self.node = $deref(next_node);
+                            self.node = deref_mut(next_node);
                         }
                         self.stack.push(node);
                     } else {
@@ -920,7 +917,7 @@ macro_rules! define_iterator {
                             } else {
                                 addr!(& mut node.left)
                             };
-                            self.node = $deref(next_node);
+                            self.node = deref_mut(next_node);
                             (&node.key, addr!(& mut node.value))
                         });
                     }
@@ -943,14 +940,14 @@ macro_rules! define_iterator {
             #[inline]
             fn traverse_left(&mut self) {
                 let node = unsafe {addr!(& mut *self.node)};
-                self.node = $deref(addr!(& mut node.left));
+                self.node = deref_mut(addr!(& mut node.left));
                 self.stack.push(node);
             }
 
             #[inline]
             fn traverse_right(&mut self) {
                 let node = unsafe {addr!(& mut *self.node)};
-                self.node = $deref(addr!(& mut node.right));
+                self.node = deref_mut(addr!(& mut node.right));
             }
 
             #[inline]
@@ -1028,7 +1025,6 @@ impl<'a, K, V> Iterator for RevIter<'a, K, V> {
 define_iterator! {
     IterMut,
     RevIterMut,
-    deref = deref_mut,
 }
 
 fn deref_mut<K, V>(x: &mut Option<Box<TreeNode<K, V>>>) -> *mut TreeNode<K, V> {
