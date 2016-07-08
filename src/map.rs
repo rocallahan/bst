@@ -895,24 +895,20 @@ macro_rules! define_iterator {
 
      // the function to go from &m Option<Box<TreeNode>> to *m TreeNode
      deref = $deref:ident,
-
-     // see comment on `addr!`, this is just an optional `mut`, but
-     // there's no support for 0-or-1 repeats.
-     addr_mut = $($addr_mut:tt)*
      ) => {
         // private methods on the forward iterator (item!() for the
         // addr_mut in the next_ return value)
         item!(impl<'a, K, V> $name<'a, K, V> {
             #[inline(always)]
-            fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a $($addr_mut)* V)> {
+            fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
                 loop {
                     if !self.node.is_null() {
-                        let node = unsafe {addr!(& $($addr_mut)* *self.node)};
+                        let node = unsafe {addr!(& mut *self.node)};
                         {
                             let next_node = if forward {
-                                addr!(& $($addr_mut)* node.left)
+                                addr!(& mut node.left)
                             } else {
-                                addr!(& $($addr_mut)* node.right)
+                                addr!(& mut node.right)
                             };
                             self.node = $deref(next_node);
                         }
@@ -920,12 +916,12 @@ macro_rules! define_iterator {
                     } else {
                         return self.stack.pop().map(|node| {
                             let next_node = if forward {
-                                addr!(& $($addr_mut)* node.right)
+                                addr!(& mut node.right)
                             } else {
-                                addr!(& $($addr_mut)* node.left)
+                                addr!(& mut node.left)
                             };
                             self.node = $deref(next_node);
-                            (&node.key, addr!(& $($addr_mut)* node.value))
+                            (&node.key, addr!(& mut node.value))
                         });
                     }
                 }
@@ -946,22 +942,22 @@ macro_rules! define_iterator {
             /// node from which we traversed left.
             #[inline]
             fn traverse_left(&mut self) {
-                let node = unsafe {addr!(& $($addr_mut)* *self.node)};
-                self.node = $deref(addr!(& $($addr_mut)* node.left));
+                let node = unsafe {addr!(& mut *self.node)};
+                self.node = $deref(addr!(& mut node.left));
                 self.stack.push(node);
             }
 
             #[inline]
             fn traverse_right(&mut self) {
-                let node = unsafe {addr!(& $($addr_mut)* *self.node)};
-                self.node = $deref(addr!(& $($addr_mut)* node.right));
+                let node = unsafe {addr!(& mut *self.node)};
+                self.node = $deref(addr!(& mut node.right));
             }
 
             #[inline]
             fn traverse_complete(&mut self) {
                 if !self.node.is_null() {
                     unsafe {
-                        self.stack.push(addr!(& $($addr_mut)* *self.node));
+                        self.stack.push(addr!(& mut *self.node));
                     }
                     self.node = ptr::null_mut();
                 }
@@ -970,11 +966,11 @@ macro_rules! define_iterator {
 
         // the forward Iterator impl.
         item!(impl<'a, K, V> Iterator for $name<'a, K, V> {
-            type Item = (&'a K, &'a $($addr_mut)* V);
+            type Item = (&'a K, &'a mut V);
             /// Advances the iterator to the next node (in order) and return a
             /// tuple with a reference to the key and value. If there are no
             /// more nodes, return `None`.
-            fn next(&mut self) -> Option<(&'a K, &'a $($addr_mut)* V)> {
+            fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
                 self.next_(true)
             }
 
@@ -986,8 +982,8 @@ macro_rules! define_iterator {
 
         // the reverse Iterator impl.
         item!(impl<'a, K, V> Iterator for $rev_name<'a, K, V> {
-            type Item = (&'a K, &'a $($addr_mut)* V);
-            fn next(&mut self) -> Option<(&'a K, &'a $($addr_mut)* V)> {
+            type Item = (&'a K, &'a mut V);
+            fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
                 self.iter.next_(false)
             }
 
@@ -1033,8 +1029,6 @@ define_iterator! {
     IterMut,
     RevIterMut,
     deref = deref_mut,
-
-    addr_mut = mut
 }
 
 fn deref_mut<K, V>(x: &mut Option<Box<TreeNode<K, V>>>) -> *mut TreeNode<K, V> {
