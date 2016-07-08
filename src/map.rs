@@ -879,19 +879,17 @@ pub struct Keys<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -
 /// TreeMap values iterator.
 pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a V>);
 
-macro_rules! addr { ($e:expr) => { $e }}
-
 impl<'a, K, V> IterMut<'a, K, V> {
     #[inline(always)]
     fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
         loop {
             if !self.node.is_null() {
-                let node = unsafe { addr!(&mut *self.node) };
+                let node = unsafe { &mut *self.node };
                 {
                     let next_node = if forward {
-                        addr!(&mut node.left)
+                        &mut node.left
                     } else {
-                        addr!(&mut node.right)
+                        &mut node.right
                     };
                     self.node = deref_mut(next_node);
                 }
@@ -899,12 +897,12 @@ impl<'a, K, V> IterMut<'a, K, V> {
             } else {
                 return self.stack.pop().map(|node| {
                     let next_node = if forward {
-                        addr!(&mut node.right)
+                        &mut node.right
                     } else {
-                        addr!(&mut node.left)
+                        &mut node.left
                     };
                     self.node = deref_mut(next_node);
-                    (&node.key, addr!(&mut node.value))
+                    (&node.key, &mut node.value)
                 });
             }
         }
@@ -925,22 +923,22 @@ impl<'a, K, V> IterMut<'a, K, V> {
     /// node from which we traversed left.
     #[inline]
     fn traverse_left(&mut self) {
-        let node = unsafe { addr!(&mut *self.node) };
-        self.node = deref_mut(addr!(&mut node.left));
+        let node = unsafe { &mut *self.node };
+        self.node = deref_mut(&mut node.left);
         self.stack.push(node);
     }
 
     #[inline]
     fn traverse_right(&mut self) {
-        let node = unsafe { addr!(&mut *self.node) };
-        self.node = deref_mut(addr!(&mut node.right));
+        let node = unsafe { &mut *self.node };
+        self.node = deref_mut(&mut node.right);
     }
 
     #[inline]
     fn traverse_complete(&mut self) {
         if !self.node.is_null() {
             unsafe {
-                self.stack.push(addr!(&mut *self.node));
+                self.stack.push(&mut *self.node);
             }
             self.node = ptr::null_mut();
         }
