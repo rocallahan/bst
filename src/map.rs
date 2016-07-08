@@ -301,8 +301,6 @@ impl<K, V, C> TreeMap<K, V, C>
         Iter {
             stack: vec![],
             node: deref(&self.root),
-            remaining_min: self.length,
-            remaining_max: self.length,
         }
     }
 
@@ -352,8 +350,6 @@ impl<K, V, C> TreeMap<K, V, C>
         IterMut {
             stack: vec![],
             node: deref_mut(&mut self.root),
-            remaining_min: self.length,
-            remaining_max: self.length,
         }
     }
 
@@ -706,8 +702,6 @@ impl<K, V, C> TreeMap<K, V, C>
         (Iter {
             stack: vec![],
             node: deref(&self.root),
-            remaining_min: 0,
-            remaining_max: self.length,
         },
          &self.cmp)
     }
@@ -766,8 +760,6 @@ impl<K, V, C> TreeMap<K, V, C>
         (IterMut {
             stack: vec![],
             node: deref_mut(&mut self.root),
-            remaining_min: 0,
-            remaining_max: self.length,
         },
          &self.cmp)
     }
@@ -857,8 +849,6 @@ pub struct Iter<'a, K: 'a, V: 'a> {
     // We have visited all nodes before |node|'s subtree but not any nodes
     // in |node|'s subtree.
     node: *const TreeNode<K, V>,
-    remaining_min: usize,
-    remaining_max: usize,
 }
 
 /// Lazy backward iterator over a map
@@ -890,8 +880,6 @@ pub struct IterMut<'a, K: 'a, V: 'a> {
     //
     // (This field can legitimately be null.)
     node: *mut TreeNode<K, V>,
-    remaining_min: usize,
-    remaining_max: usize,
 }
 
 /// Lazy backward iterator over a map
@@ -951,10 +939,6 @@ macro_rules! define_iterator {
                                 addr!(& $($addr_mut)* node.left)
                             };
                             self.node = $deref(next_node);
-                            self.remaining_max -= 1;
-                            if self.remaining_min > 0 {
-                                self.remaining_min -= 1;
-                            }
                             (&node.key, addr!(& $($addr_mut)* node.value))
                         });
                     }
@@ -1010,7 +994,7 @@ macro_rules! define_iterator {
 
             #[inline]
             fn size_hint(&self) -> (usize, Option<usize>) {
-                (self.remaining_min, Some(self.remaining_max))
+                (0, None)
             }
         });
 
