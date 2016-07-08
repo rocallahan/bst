@@ -890,12 +890,10 @@ macro_rules! addr { ($e:expr) => { $e }}
 macro_rules! item { ($i:item) => { $i }}
 
 macro_rules! define_iterator {
-    ($name:ident,
-     $rev_name:ident,
-     ) => {
+    ( ) => {
         // private methods on the forward iterator (item!() for the
         // addr_mut in the next_ return value)
-        item!(impl<'a, K, V> $name<'a, K, V> {
+        item!(impl<'a, K, V> IterMut<'a, K, V> {
             #[inline(always)]
             fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
                 loop {
@@ -962,7 +960,7 @@ macro_rules! define_iterator {
         });
 
         // the forward Iterator impl.
-        item!(impl<'a, K, V> Iterator for $name<'a, K, V> {
+        item!(impl<'a, K, V> Iterator for IterMut<'a, K, V> {
             type Item = (&'a K, &'a mut V);
             /// Advances the iterator to the next node (in order) and return a
             /// tuple with a reference to the key and value. If there are no
@@ -978,7 +976,7 @@ macro_rules! define_iterator {
         });
 
         // the reverse Iterator impl.
-        item!(impl<'a, K, V> Iterator for $rev_name<'a, K, V> {
+        item!(impl<'a, K, V> Iterator for RevIterMut<'a, K, V> {
             type Item = (&'a K, &'a mut V);
             fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
                 self.iter.next_(false)
@@ -1022,10 +1020,7 @@ impl<'a, K, V> Iterator for RevIter<'a, K, V> {
     }
 }
 
-define_iterator! {
-    IterMut,
-    RevIterMut,
-}
+define_iterator!{}
 
 fn deref_mut<K, V>(x: &mut Option<Box<TreeNode<K, V>>>) -> *mut TreeNode<K, V> {
     match *x {
