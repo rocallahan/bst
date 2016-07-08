@@ -16,6 +16,7 @@ use std::mem::{replace, swap};
 use std::ops;
 use std::ptr;
 use std::hash::{Hash, Hasher};
+use std::marker::PhantomData;
 
 use compare::{Compare, Natural, natural};
 
@@ -297,7 +298,7 @@ impl<K, V, C> TreeMap<K, V, C>
     ///     println!("{}: {}", key, value);
     /// }
     /// ```
-    pub fn iter(&self) -> Iter<K, V> {
+    pub fn iter(&self) -> Iter<K, V, Forward> {
         Iter { iter_mut: (unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut() }
     }
 
@@ -317,8 +318,8 @@ impl<K, V, C> TreeMap<K, V, C>
     ///     println!("{}: {}", key, value);
     /// }
     /// ```
-    pub fn rev_iter(&self) -> RevIter<K, V> {
-        RevIter { iter: self.iter() }
+    pub fn rev_iter(&self) -> Iter<K, V, Backward> {
+        Iter { iter_mut: (unsafe { &mut *(self as *const Self as *mut Self) }).rev_iter_mut() }
     }
 
     /// Gets a lazy forward iterator over the key-value pairs in the
@@ -343,10 +344,11 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&"b"), Some(&12));
     /// assert_eq!(map.get(&"c"), Some(&3));
     /// ```
-    pub fn iter_mut(&mut self) -> IterMut<K, V> {
+    pub fn iter_mut(&mut self) -> IterMut<K, V, Forward> {
         IterMut {
             stack: vec![],
             node: deref_mut(&mut self.root),
+            direction: PhantomData,
         }
     }
 
@@ -372,8 +374,12 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&"b"), Some(&12));
     /// assert_eq!(map.get(&"c"), Some(&13));
     /// ```
-    pub fn rev_iter_mut(&mut self) -> RevIterMut<K, V> {
-        RevIterMut { iter: self.iter_mut() }
+    pub fn rev_iter_mut(&mut self) -> IterMut<K, V, Backward> {
+        IterMut {
+            stack: vec![],
+            node: deref_mut(&mut self.root),
+            direction: PhantomData,
+        }
     }
 
     /// Gets a lazy iterator that consumes the treemap.
@@ -652,12 +658,13 @@ impl<K, V, C> TreeMap<K, V, C>
 
 // range iterators.
 
-fn bound_setup<'a, K, V, C, Q: ?Sized>(mut iter: IterMut<'a, K, V>,
-                                       cmp: &C,
-                                       k: &Q,
-                                       is_lower_bound: bool)
-                                       -> IterMut<'a, K, V>
-    where C: Compare<Q, K>
+fn bound_setup<'a, K, V, C, D, Q: ?Sized>(mut iter: IterMut<'a, K, V, D>,
+                                          cmp: &C,
+                                          k: &Q,
+                                          is_lower_bound: bool)
+                                          -> IterMut<'a, K, V, D>
+    where C: Compare<Q, K>,
+          D: Direction
 {
     loop {
         if !iter.node.is_null() {
@@ -702,7 +709,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.lower_bound(&5).next(), Some((&6, &"c")));
     /// assert_eq!(map.lower_bound(&10).next(), None);
     /// ```
-    pub fn lower_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V>
+    pub fn lower_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V, Forward>
         where C: Compare<Q, K>
     {
         Iter {
@@ -732,7 +739,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.upper_bound(&5).next(), Some((&6, &"c")));
     /// assert_eq!(map.upper_bound(&10).next(), None);
     /// ```
-    pub fn upper_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V>
+    pub fn upper_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V, Forward>
         where C: Compare<Q, K>
     {
         Iter {
@@ -746,10 +753,11 @@ impl<K, V, C> TreeMap<K, V, C>
 
     /// Gets a lazy iterator that should be initialized using
     /// `traverse_left`/`traverse_right`/`traverse_complete`.
-    fn iter_mut_for_traversal(&mut self) -> IterMut<K, V> {
+    fn iter_mut_for_traversal(&mut self) -> IterMut<K, V, Forward> {
         IterMut {
             stack: vec![],
             node: deref_mut(&mut self.root),
+            direction: PhantomData,
         }
     }
 
@@ -783,7 +791,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&6), Some(&"changed"));
     /// assert_eq!(map.get(&8), Some(&"changed"));
     /// ```
-    pub fn lower_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V>
+    pub fn lower_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V, Forward>
         where C: Compare<Q, K>
     {
         bound_setup((unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_for_traversal(),
@@ -822,7 +830,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&6), Some(&"changed"));
     /// assert_eq!(map.get(&8), Some(&"changed"));
     /// ```
-    pub fn upper_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V>
+    pub fn upper_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V, Forward>
         where C: Compare<Q, K>
     {
         bound_setup((unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_for_traversal(),
@@ -832,19 +840,34 @@ impl<K, V, C> TreeMap<K, V, C>
     }
 }
 
-/// Lazy forward iterator over a map
-pub struct Iter<'a, K: 'a, V: 'a> {
-    iter_mut: IterMut<'a, K, V>,
+pub trait Direction {
+    fn forward() -> bool;
 }
 
-/// Lazy backward iterator over a map
-pub struct RevIter<'a, K: 'a, V: 'a> {
-    iter: Iter<'a, K, V>,
+pub enum Forward {}
+
+impl Direction for Forward {
+    fn forward() -> bool {
+        true
+    }
+}
+
+pub enum Backward {}
+
+impl Direction for Backward {
+    fn forward() -> bool {
+        false
+    }
+}
+
+/// Lazy forward iterator over a map
+pub struct Iter<'a, K: 'a, V: 'a, D: Direction> {
+    iter_mut: IterMut<'a, K, V, D>,
 }
 
 /// Lazy forward iterator over a map that allows for the mutation of
 /// the values.
-pub struct IterMut<'a, K: 'a, V: 'a> {
+pub struct IterMut<'a, K: 'a, V: 'a, D: Direction> {
     stack: Vec<&'a mut TreeNode<K, V>>,
     // Unfortunately, we require some unsafe-ness to get around the
     // fact that we would be storing a reference *into* one of the
@@ -866,27 +889,24 @@ pub struct IterMut<'a, K: 'a, V: 'a> {
     //
     // (This field can legitimately be null.)
     node: *mut TreeNode<K, V>,
-}
-
-/// Lazy backward iterator over a map
-pub struct RevIterMut<'a, K: 'a, V: 'a> {
-    iter: IterMut<'a, K, V>,
+    direction: PhantomData<D>,
 }
 
 /// TreeMap keys iterator.
-pub struct Keys<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a K>);
+pub struct Keys<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V, Forward>, fn((&'a K, &'a V)) -> &'a K>);
 
 /// TreeMap values iterator.
-pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a V>);
+pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V, Forward>,
+                                              fn((&'a K, &'a V)) -> &'a V>);
 
-impl<'a, K, V> IterMut<'a, K, V> {
+impl<'a, K, V, D: Direction> IterMut<'a, K, V, D> {
     #[inline(always)]
-    fn next_(&mut self, forward: bool) -> Option<(&'a K, &'a mut V)> {
+    fn next_(&mut self) -> Option<(&'a K, &'a mut V)> {
         loop {
             if !self.node.is_null() {
                 let node = unsafe { &mut *self.node };
                 {
-                    let next_node = if forward {
+                    let next_node = if D::forward() {
                         &mut node.left
                     } else {
                         &mut node.right
@@ -896,7 +916,7 @@ impl<'a, K, V> IterMut<'a, K, V> {
                 self.stack.push(node);
             } else {
                 return self.stack.pop().map(|node| {
-                    let next_node = if forward {
+                    let next_node = if D::forward() {
                         &mut node.right
                     } else {
                         &mut node.left
@@ -945,13 +965,13 @@ impl<'a, K, V> IterMut<'a, K, V> {
     }
 }
 
-impl<'a, K, V> Iterator for IterMut<'a, K, V> {
+impl<'a, K, V, D: Direction> Iterator for IterMut<'a, K, V, D> {
     type Item = (&'a K, &'a mut V);
     /// Advances the iterator to the next node (in order) and return a
     /// tuple with a reference to the key and value. If there are no
     /// more nodes, return `None`.
     fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
-        self.next_(true)
+        self.next_()
     }
 
     #[inline]
@@ -960,22 +980,10 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     }
 }
 
-impl<'a, K, V> Iterator for RevIterMut<'a, K, V> {
-    type Item = (&'a K, &'a mut V);
-    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
-        self.iter.next_(false)
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
-    }
-}
-
-impl<'a, K, V> Iterator for Iter<'a, K, V> {
+impl<'a, K, V, D: Direction> Iterator for Iter<'a, K, V, D> {
     type Item = (&'a K, &'a V);
     fn next(&mut self) -> Option<(&'a K, &'a V)> {
-        match self.iter_mut.next_(true) {
+        match self.iter_mut.next_() {
             Some((k, v)) => Some((k, &*v)),
             None => None,
         }
@@ -984,21 +992,6 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (0, None)
-    }
-}
-
-impl<'a, K, V> Iterator for RevIter<'a, K, V> {
-    type Item = (&'a K, &'a V);
-    fn next(&mut self) -> Option<(&'a K, &'a V)> {
-        match self.iter.iter_mut.next_(false) {
-            Some((k, v)) => Some((k, &*v)),
-            None => None,
-        }
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
     }
 }
 
@@ -1327,8 +1320,8 @@ impl<'a, K, V, C> IntoIterator for &'a TreeMap<K, V, C>
     where C: Compare<K>
 {
     type Item = (&'a K, &'a V);
-    type IntoIter = Iter<'a, K, V>;
-    fn into_iter(self) -> Iter<'a, K, V> {
+    type IntoIter = Iter<'a, K, V, Forward>;
+    fn into_iter(self) -> Iter<'a, K, V, Forward> {
         self.iter()
     }
 }
@@ -1337,8 +1330,8 @@ impl<'a, K, V, C> IntoIterator for &'a mut TreeMap<K, V, C>
     where C: Compare<K>
 {
     type Item = (&'a K, &'a mut V);
-    type IntoIter = IterMut<'a, K, V>;
-    fn into_iter(self) -> IterMut<'a, K, V> {
+    type IntoIter = IterMut<'a, K, V, Forward>;
+    fn into_iter(self) -> IterMut<'a, K, V, Forward> {
         self.iter_mut()
     }
 }
@@ -1354,7 +1347,7 @@ impl<K, V, C> IntoIterator for TreeMap<K, V, C>
 }
 
 #[cfg(feature="ordered_iter")]
-impl<'a, K, V> ::ordered_iter::OrderedMapIterator for Iter<'a, K, V> {
+impl<'a, K, V> ::ordered_iter::OrderedMapIterator for Iter<'a, K, V, Forward> {
     type Key = &'a K;
     type Val = &'a V;
 }

@@ -16,7 +16,7 @@ use std::hash::{Hash, Hasher};
 use std::ops;
 
 use compare::{Compare, Natural, natural};
-use super::map::{self, TreeMap};
+use super::map::{self, Forward, Backward, TreeMap};
 
 // FIXME(conventions): implement bounded iterators
 // FIXME(conventions): replace rev_iter(_mut) by making iter(_mut) DoubleEnded
@@ -591,12 +591,12 @@ impl<T, C> TreeSet<T, C>
 
 /// A lazy forward iterator over a set.
 pub struct Iter<'a, T: 'a> {
-    iter: map::Iter<'a, T, ()>,
+    iter: map::Iter<'a, T, (), Forward>,
 }
 
 /// A lazy backward iterator over a set.
 pub struct RevIter<'a, T: 'a> {
-    iter: map::RevIter<'a, T, ()>,
+    iter: map::Iter<'a, T, (), Backward>,
 }
 
 /// A lazy forward iterator over a set that consumes the set while iterating.
@@ -1117,7 +1117,10 @@ mod test {
     #[test]
     fn test_intersection() {
         fn check_intersection(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y| x.intersection(y).map(|v| *v).collect::<Vec<i32>>())
+            check(a,
+                  b,
+                  expected,
+                  |x, y| x.intersection(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_intersection(&[], &[], &[]);
@@ -1133,7 +1136,10 @@ mod test {
     #[test]
     fn test_difference() {
         fn check_difference(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y| x.difference(y).map(|v| *v).collect::<Vec<i32>>())
+            check(a,
+                  b,
+                  expected,
+                  |x, y| x.difference(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_difference(&[], &[], &[]);
@@ -1148,7 +1154,10 @@ mod test {
     #[test]
     fn test_symmetric_difference() {
         fn check_symmetric_difference(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y| x.symmetric_difference(y).map(|v| *v).collect::<Vec<i32>>())
+            check(a,
+                  b,
+                  expected,
+                  |x, y| x.symmetric_difference(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_symmetric_difference(&[], &[], &[]);
@@ -1162,7 +1171,10 @@ mod test {
     #[test]
     fn test_union() {
         fn check_union(a: &[i32], b: &[i32], expected: &[i32]) {
-            check(a, b, expected, |x, y| x.union(y).map(|v| *v).collect::<Vec<i32>>())
+            check(a,
+                  b,
+                  expected,
+                  |x, y| x.union(y).map(|v| *v).collect::<Vec<i32>>())
         }
 
         check_union(&[], &[], &[]);
