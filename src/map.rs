@@ -669,6 +669,29 @@ impl<K, V, C> TreeMap<K, V, C>
         }
     }
 
+    /// Constructs a mutable double-ended iterator over a sub-range of elements in the map, starting
+    /// at min, and ending at max. If min is `Unbounded`, then it will be treated as "negative
+    /// infinity", and if max is `Unbounded`, then it will be treated as "positive infinity".
+    /// Thus range(Unbounded, Unbounded) will yield the whole collection.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use stable_bst::TreeMap;
+    /// use stable_bst::Bound::{Included, Excluded};
+    ///
+    /// let mut map: TreeMap<&str, i32> = ["Alice", "Bob", "Carol", "Cheryl"].iter()
+    ///                                                                      .map(|&s| (s, 0))
+    ///                                                                      .collect();
+    /// for (_, balance) in map.range_mut(Included(&"B"), Excluded(&"Cheryl")) {
+    ///     *balance += 100;
+    /// }
+    /// for (name, balance) in &map {
+    ///     println!("{} => {}", name, balance);
+    /// }
+    /// ```
     pub fn range_mut<'a, Min: ?Sized, Max: ?Sized>(&'a mut self,
                                                    min: Bound<&Min>,
                                                    max: Bound<&Max>)
@@ -719,6 +742,28 @@ impl<K, V, C> TreeMap<K, V, C>
         }
     }
 
+    /// Constructs a double-ended iterator over a sub-range of elements in the map, starting
+    /// at min, and ending at max. If min is `Unbounded`, then it will be treated as "negative
+    /// infinity", and if max is `Unbounded`, then it will be treated as "positive infinity".
+    /// Thus range(Unbounded, Unbounded) will yield the whole collection.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use stable_bst::TreeMap;
+    /// use stable_bst::Bound::{Included, Unbounded};
+    ///
+    /// let mut map = TreeMap::new();
+    /// map.insert(3, "a");
+    /// map.insert(5, "b");
+    /// map.insert(8, "c");
+    /// for (&key, &value) in map.range(Included(&4), Included(&8)) {
+    ///     println!("{}: {}", key, value);
+    /// }
+    /// assert_eq!(Some((&5, &"b")), map.range(Included(&4), Unbounded).next());
+    /// ```
     pub fn range<'a, Min: ?Sized, Max: ?Sized>(&'a self,
                                                min: Bound<&Min>,
                                                max: Bound<&Max>)
