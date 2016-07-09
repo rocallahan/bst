@@ -1549,7 +1549,7 @@ impl<'a, K, V> ::ordered_iter::OrderedMapIterator for Iter<'a, K, V, Forward> {
 mod test_treemap {
     use rand::{self, Rng};
 
-    use super::{TreeMap, TreeNode};
+    use super::{TreeMap, TreeNode, Range};
     use super::super::Bound;
 
     #[test]
@@ -1896,19 +1896,66 @@ mod test_treemap {
         assert!(m_upper.iter().all(|(_, &x)| x == 0));
     }
 
+    fn to_vec<K, V: Clone>(range: Range<K, V>) -> Vec<V> {
+        range.map(|o| o.1.clone()).collect::<Vec<V>>()
+    }
+
+    fn skip<K, V>(mut range: Range<K, V>, mut f: u32, mut b: u32) -> Range<K, V> {
+        while f > 0 {
+            range.next();
+            f -= 1;
+        }
+        while b > 0 {
+            range.next_back();
+            b -= 1;
+        }
+        range
+    }
+
     #[test]
     fn test_range() {
         let mut m = TreeMap::new();
-        for i in 0..5 {
-            assert!(m.insert(i, 100 * i).is_none());
+        for i in 0..10 {
+            assert!(m.insert(i * 10, 100 * i).is_none());
         }
 
-        let v1 = m.range(Bound::Unbounded, Bound::Unbounded)
-            .map(|o| match o {
-                (_, &v) => v,
-            })
-            .collect::<Vec<i32>>();
-        assert_eq!(v1, vec![0, 100, 200, 300, 400]);
+        assert_eq!(to_vec(m.range(Bound::Unbounded, Bound::Unbounded)),
+                   vec![0, 100, 200, 300, 400, 500, 600, 700, 800, 900]);
+        assert_eq!(to_vec(m.range(Bound::Included(&50), Bound::Unbounded)),
+                   vec![500, 600, 700, 800, 900]);
+        assert_eq!(to_vec(m.range(Bound::Excluded(&50), Bound::Unbounded)),
+                   vec![600, 700, 800, 900]);
+
+        assert_eq!(to_vec(m.range(Bound::Unbounded, Bound::Included(&70))),
+                   vec![0, 100, 200, 300, 400, 500, 600, 700]);
+        assert_eq!(to_vec(m.range(Bound::Unbounded, Bound::Excluded(&70))),
+                   vec![0, 100, 200, 300, 400, 500, 600]);
+
+        assert_eq!(to_vec(m.range(Bound::Included(&70), Bound::Included(&70))),
+                   vec![700]);
+
+        assert_eq!(to_vec(m.range(Bound::Included(&60), Bound::Excluded(&50))),
+                   vec![]);
+        assert_eq!(to_vec(m.range(Bound::Unbounded, Bound::Excluded(&0))),
+                   vec![]);
+
+        assert_eq!(m.range(Bound::Unbounded, Bound::Unbounded).next_back(),
+                   Some((&90, &900)));
+        assert_eq!(m.range(Bound::Unbounded, Bound::Included(&60)).next_back(),
+                   Some((&60, &600)));
+        assert_eq!(m.range(Bound::Unbounded, Bound::Excluded(&60)).next_back(),
+                   Some((&50, &500)));
+
+        assert_eq!(to_vec(skip(m.range(Bound::Unbounded, Bound::Unbounded), 3, 3)),
+                   vec![300, 400, 500, 600]);
+        assert_eq!(to_vec(skip(m.range(Bound::Unbounded, Bound::Unbounded), 5, 5)),
+                   vec![]);
+        assert_eq!(to_vec(skip(m.range(Bound::Unbounded, Bound::Unbounded), 3, 7)),
+                   vec![]);
+        assert_eq!(to_vec(skip(m.range(Bound::Unbounded, Bound::Unbounded), 7, 3)),
+                   vec![]);
+        assert_eq!(to_vec(skip(m.range(Bound::Unbounded, Bound::Unbounded), 8, 3)),
+                   vec![]);
     }
 
     #[test]
