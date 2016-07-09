@@ -302,26 +302,6 @@ impl<K, V, C> TreeMap<K, V, C>
         Iter { iter_mut: (unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut() }
     }
 
-    /// Gets a lazy reverse iterator over the key-value pairs in the map, in descending order.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    /// let mut map = TreeMap::new();
-    /// map.insert("a", 1);
-    /// map.insert("c", 3);
-    /// map.insert("b", 2);
-    ///
-    /// // Print contents in descending order
-    /// for (key, value) in map.rev_iter() {
-    ///     println!("{}: {}", key, value);
-    /// }
-    /// ```
-    pub fn rev_iter(&self) -> Iter<K, V, Backward> {
-        Iter { iter_mut: (unsafe { &mut *(self as *const Self as *mut Self) }).rev_iter_mut() }
-    }
-
     fn iter_mut_dir<D: Direction>(&mut self) -> IterMut<K, V, D> {
         IterMut {
             stack: vec![],
@@ -353,32 +333,6 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&"c"), Some(&3));
     /// ```
     pub fn iter_mut(&mut self) -> IterMut<K, V, Forward> {
-        self.iter_mut_dir()
-    }
-
-    /// Gets a lazy reverse iterator over the key-value pairs in the
-    /// map, with the values being mutable.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    /// let mut map = TreeMap::new();
-    /// map.insert("a", 1);
-    /// map.insert("c", 3);
-    /// map.insert("b", 2);
-    ///
-    /// // Add 10 until we find "b"
-    /// for (key, value) in map.rev_iter_mut() {
-    ///     *value += 10;
-    ///     if key == &"b" { break }
-    /// }
-    ///
-    /// assert_eq!(map.get(&"a"), Some(&1));
-    /// assert_eq!(map.get(&"b"), Some(&12));
-    /// assert_eq!(map.get(&"c"), Some(&13));
-    /// ```
-    pub fn rev_iter_mut(&mut self) -> IterMut<K, V, Backward> {
         self.iter_mut_dir()
     }
 
@@ -658,187 +612,9 @@ impl<K, V, C> TreeMap<K, V, C>
 
 // range iterators.
 
-fn bound_setup<'a, K, V, C, D, Q: ?Sized>(mut iter: IterMut<'a, K, V, D>,
-                                          cmp: &C,
-                                          k: &Q,
-                                          is_lower_bound: bool)
-                                          -> IterMut<'a, K, V, D>
-    where C: Compare<Q, K>,
-          D: Direction
-{
-    loop {
-        if !iter.node.is_null() {
-            let node_k = unsafe { &(*iter.node).key };
-            match cmp.compare(k, node_k) {
-                Less => iter.traverse_left(),
-                Greater => iter.traverse_right(),
-                Equal => {
-                    if is_lower_bound {
-                        iter.traverse_complete();
-                        return iter;
-                    } else {
-                        iter.traverse_right()
-                    }
-                }
-            }
-        } else {
-            iter.traverse_complete();
-            return iter;
-        }
-    }
-}
-
 impl<K, V, C> TreeMap<K, V, C>
     where C: Compare<K>
 {
-    /// Returns a lazy iterator to the first key-value pair whose key is not less than `k`
-    /// If all keys in map are less than `k` an empty iterator is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    ///
-    /// let mut map = TreeMap::new();
-    /// map.insert(2, "a");
-    /// map.insert(4, "b");
-    /// map.insert(6, "c");
-    /// map.insert(8, "d");
-    ///
-    /// assert_eq!(map.lower_bound(&4).next(), Some((&4, &"b")));
-    /// assert_eq!(map.lower_bound(&5).next(), Some((&6, &"c")));
-    /// assert_eq!(map.lower_bound(&10).next(), None);
-    /// ```
-    pub fn lower_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V, Forward>
-        where C: Compare<Q, K>
-    {
-        Iter {
-            iter_mut: bound_setup((unsafe { &mut *(self as *const Self as *mut Self) })
-                                      .iter_mut_for_traversal(),
-                                  &self.cmp,
-                                  k,
-                                  true),
-        }
-    }
-
-    /// Returns a lazy iterator to the first key-value pair whose key is greater than `k`
-    /// If all keys in map are less than or equal to `k` an empty iterator is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    ///
-    /// let mut map = TreeMap::new();
-    /// map.insert(2, "a");
-    /// map.insert(4, "b");
-    /// map.insert(6, "c");
-    /// map.insert(8, "d");
-    ///
-    /// assert_eq!(map.upper_bound(&4).next(), Some((&6, &"c")));
-    /// assert_eq!(map.upper_bound(&5).next(), Some((&6, &"c")));
-    /// assert_eq!(map.upper_bound(&10).next(), None);
-    /// ```
-    pub fn upper_bound<Q: ?Sized>(&self, k: &Q) -> Iter<K, V, Forward>
-        where C: Compare<Q, K>
-    {
-        Iter {
-            iter_mut: bound_setup((unsafe { &mut *(self as *const Self as *mut Self) })
-                                      .iter_mut_for_traversal(),
-                                  &self.cmp,
-                                  k,
-                                  false),
-        }
-    }
-
-    /// Gets a lazy iterator that should be initialized using
-    /// `traverse_left`/`traverse_right`/`traverse_complete`.
-    fn iter_mut_for_traversal(&mut self) -> IterMut<K, V, Forward> {
-        IterMut {
-            stack: vec![],
-            node: deref_mut(&mut self.root),
-            direction: PhantomData,
-        }
-    }
-
-    /// Returns a lazy value iterator to the first key-value pair (with
-    /// the value being mutable) whose key is not less than `k`.
-    ///
-    /// If all keys in map are less than `k` an empty iterator is
-    /// returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    ///
-    /// let mut map = TreeMap::new();
-    /// map.insert(2, "a");
-    /// map.insert(4, "b");
-    /// map.insert(6, "c");
-    /// map.insert(8, "d");
-    ///
-    /// assert_eq!(map.lower_bound_mut(&4).next(), Some((&4, &mut "b")));
-    /// assert_eq!(map.lower_bound_mut(&5).next(), Some((&6, &mut "c")));
-    /// assert_eq!(map.lower_bound_mut(&10).next(), None);
-    ///
-    /// for (key, value) in map.lower_bound_mut(&4) {
-    ///     *value = "changed";
-    /// }
-    ///
-    /// assert_eq!(map.get(&2), Some(&"a"));
-    /// assert_eq!(map.get(&4), Some(&"changed"));
-    /// assert_eq!(map.get(&6), Some(&"changed"));
-    /// assert_eq!(map.get(&8), Some(&"changed"));
-    /// ```
-    pub fn lower_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V, Forward>
-        where C: Compare<Q, K>
-    {
-        bound_setup((unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_for_traversal(),
-                    &self.cmp,
-                    k,
-                    true)
-    }
-
-    /// Returns a lazy iterator to the first key-value pair (with the
-    /// value being mutable) whose key is greater than `k`.
-    ///
-    /// If all keys in map are less than or equal to `k` an empty iterator
-    /// is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeMap;
-    ///
-    /// let mut map = TreeMap::new();
-    /// map.insert(2, "a");
-    /// map.insert(4, "b");
-    /// map.insert(6, "c");
-    /// map.insert(8, "d");
-    ///
-    /// assert_eq!(map.upper_bound_mut(&4).next(), Some((&6, &mut "c")));
-    /// assert_eq!(map.upper_bound_mut(&5).next(), Some((&6, &mut "c")));
-    /// assert_eq!(map.upper_bound_mut(&10).next(), None);
-    ///
-    /// for (key, value) in map.upper_bound_mut(&4) {
-    ///     *value = "changed";
-    /// }
-    ///
-    /// assert_eq!(map.get(&2), Some(&"a"));
-    /// assert_eq!(map.get(&4), Some(&"b"));
-    /// assert_eq!(map.get(&6), Some(&"changed"));
-    /// assert_eq!(map.get(&8), Some(&"changed"));
-    /// ```
-    pub fn upper_bound_mut<Q: ?Sized>(&mut self, k: &Q) -> IterMut<K, V, Forward>
-        where C: Compare<Q, K>
-    {
-        bound_setup((unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_for_traversal(),
-                    &self.cmp,
-                    k,
-                    false)
-    }
-
     fn compare_bound<D, Q: ?Sized>(&self, bound: Bound<&Q>, key: &K) -> Ordering
         where C: Compare<Q, K>,
               D: Direction
@@ -1054,32 +830,6 @@ impl<'a, K, V, D: Direction> IterMut<'a, K, V, D> {
             self.node = deref_mut(next_node);
             (&node.key, &mut node.value)
         });
-    }
-
-    /// traverse_left, traverse_right and traverse_complete are
-    /// used to initialize Iter/IterMut
-    /// pointing to element inside tree structure.
-    ///
-    /// They should be used in following manner:
-    ///   - create iterator using TreeMap::[mut_]iter_for_traversal
-    ///   - find required node using `traverse_left`/`traverse_right`
-    ///     (current node is `Iter::node` field)
-    ///   - complete initialization with `traverse_complete`
-    ///
-    /// After this, iteration will start from `self.node`.  If
-    /// `self.node` is None iteration will start from last
-    /// node from which we traversed left.
-    #[inline]
-    fn traverse_left(&mut self) {
-        let node = unsafe { &mut *self.node };
-        self.node = deref_mut(&mut node.left);
-        self.stack.push(node);
-    }
-
-    #[inline]
-    fn traverse_right(&mut self) {
-        let node = unsafe { &mut *self.node };
-        self.node = deref_mut(&mut node.right);
     }
 
     #[inline]
@@ -1799,38 +1549,20 @@ mod test_treemap {
         }
 
         for i in 1..198 {
-            let mut lb_it = m.lower_bound(&i);
+            let mut lb_it = m.range(Bound::Included(&i), Bound::Unbounded);
             let (&k, &v) = lb_it.next().unwrap();
             let lb = i + i % 2;
             assert_eq!(lb, k);
             assert_eq!(lb * 2, v);
 
-            let mut ub_it = m.upper_bound(&i);
+            let mut ub_it = m.range(Bound::Excluded(&i), Bound::Unbounded);
             let (&k, &v) = ub_it.next().unwrap();
             let ub = i + 2 - i % 2;
             assert_eq!(ub, k);
             assert_eq!(ub * 2, v);
         }
-        let mut end_it = m.lower_bound(&199);
+        let mut end_it = m.range(Bound::Included(&199), Bound::Unbounded);
         assert_eq!(end_it.next(), None);
-    }
-
-    #[test]
-    fn test_rev_iter() {
-        let mut m = TreeMap::new();
-
-        assert!(m.insert(3, 6).is_none());
-        assert!(m.insert(0, 0).is_none());
-        assert!(m.insert(4, 8).is_none());
-        assert!(m.insert(2, 4).is_none());
-        assert!(m.insert(1, 2).is_none());
-
-        let mut n = 4;
-        for (k, v) in m.rev_iter() {
-            assert_eq!(*k, n);
-            assert_eq!(*v, n * 2);
-            n -= 1;
-        }
     }
 
     #[test]
@@ -1848,21 +1580,6 @@ mod test_treemap {
             assert_eq!(v, 111 * k);
         }
     }
-    #[test]
-    fn test_mut_rev_iter() {
-        let mut m = TreeMap::new();
-        for i in 0..10 {
-            assert!(m.insert(i, 100 * i).is_none());
-        }
-
-        for (i, (&k, v)) in m.rev_iter_mut().enumerate() {
-            *v += k * 10 + (9 - i); // 900 + 90 + (9 - 0), 800 + 80 + (9 - 1), ...
-        }
-
-        for (&k, &v) in m.iter() {
-            assert_eq!(v, 111 * k);
-        }
-    }
 
     #[test]
     fn test_mut_interval_iter() {
@@ -1874,23 +1591,23 @@ mod test_treemap {
         }
 
         for i in 1..199 {
-            let mut lb_it = m_lower.lower_bound_mut(&i);
+            let mut lb_it = m_lower.range_mut(Bound::Included(&i), Bound::Unbounded);
             let (&k, v) = lb_it.next().unwrap();
             let lb = i + i % 2;
             assert_eq!(lb, k);
             *v -= k;
         }
         for i in 0..198 {
-            let mut ub_it = m_upper.upper_bound_mut(&i);
+            let mut ub_it = m_upper.range_mut(Bound::Excluded(&i), Bound::Unbounded);
             let (&k, v) = ub_it.next().unwrap();
             let ub = i + 2 - i % 2;
             assert_eq!(ub, k);
             *v -= k;
         }
 
-        assert!(m_lower.lower_bound_mut(&199).next().is_none());
+        assert!(m_lower.range_mut(Bound::Included(&199), Bound::Unbounded).next().is_none());
 
-        assert!(m_upper.upper_bound_mut(&198).next().is_none());
+        assert!(m_upper.range_mut(Bound::Excluded(&199), Bound::Unbounded).next().is_none());
 
         assert!(m_lower.iter().all(|(_, &x)| x == 0));
         assert!(m_upper.iter().all(|(_, &x)| x == 0));

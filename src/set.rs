@@ -177,24 +177,6 @@ impl<T, C> TreeSet<T, C>
         Iter { iter: self.map.iter() }
     }
 
-    /// Gets a lazy iterator over the values in the set, in descending order.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeSet;
-    /// let set: TreeSet<i32> = [1, 4, 3, 5, 2].iter().map(|&x| x).collect();
-    ///
-    /// // Will print in descending order.
-    /// for x in set.rev_iter() {
-    ///     println!("{}", x);
-    /// }
-    /// ```
-    #[inline]
-    pub fn rev_iter(&self) -> RevIter<T> {
-        RevIter { iter: self.map.rev_iter() }
-    }
-
     /// Creates a consuming iterator, that is, one that moves each value out of the
     /// set in ascending order. The set cannot be used after calling this.
     ///
@@ -216,43 +198,6 @@ impl<T, C> TreeSet<T, C>
         let first: fn((T, ())) -> T = first; // coerce to fn pointer
 
         IntoIter(self.map.into_iter().map(first))
-    }
-
-    /// Gets a lazy iterator pointing to the first value not less than `v` (greater or equal).
-    /// If all elements in the set are less than `v` empty iterator is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeSet;
-    /// let set: TreeSet<i32> = [2, 4, 6, 8].iter().map(|&x| x).collect();
-    ///
-    /// assert_eq!(set.lower_bound(&4).next(), Some(&4));
-    /// assert_eq!(set.lower_bound(&5).next(), Some(&6));
-    /// assert_eq!(set.lower_bound(&10).next(), None);
-    /// ```
-    #[inline]
-    pub fn lower_bound(&self, v: &T) -> Iter<T> {
-        Iter { iter: self.map.lower_bound(v) }
-    }
-
-    /// Gets a lazy iterator pointing to the first value greater than `v`.
-    /// If all elements in the set are less than or equal to `v` an
-    /// empty iterator is returned.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use stable_bst::TreeSet;
-    /// let set: TreeSet<i32> = [2, 4, 6, 8].iter().map(|&x| x).collect();
-    ///
-    /// assert_eq!(set.upper_bound(&4).next(), Some(&6));
-    /// assert_eq!(set.upper_bound(&5).next(), Some(&6));
-    /// assert_eq!(set.upper_bound(&10).next(), None);
-    /// ```
-    #[inline]
-    pub fn upper_bound(&self, v: &T) -> Iter<T> {
-        Iter { iter: self.map.upper_bound(v) }
     }
 
     /// Visits the values representing the difference, in ascending order.
@@ -1024,23 +969,6 @@ mod test {
         for x in m.iter() {
             assert_eq!(*x, n);
             n += 1
-        }
-    }
-
-    #[test]
-    fn test_rev_iter() {
-        let mut m = TreeSet::new();
-
-        assert!(m.insert(3));
-        assert!(m.insert(0));
-        assert!(m.insert(4));
-        assert!(m.insert(2));
-        assert!(m.insert(1));
-
-        let mut n = 4;
-        for x in m.rev_iter() {
-            assert_eq!(*x, n);
-            n -= 1;
         }
     }
 
