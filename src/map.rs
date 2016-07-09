@@ -14,14 +14,14 @@ use std::fmt::{self, Debug};
 use std::iter::{self, IntoIterator};
 use std::mem::{replace, swap};
 use std::ops;
+use std::ops::Deref;
 use std::ptr;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
 use compare::{Compare, Natural, natural};
 
-// FIXME(conventions): implement bounded iterators
-// FIXME(conventions): replace rev_iter(_mut) by making iter(_mut) DoubleEnded
+use super::Bound;
 
 /// This is implemented as an AA tree, which is a simplified variation of
 /// a red-black tree where red (horizontal) nodes can only be added
@@ -322,6 +322,14 @@ impl<K, V, C> TreeMap<K, V, C>
         Iter { iter_mut: (unsafe { &mut *(self as *const Self as *mut Self) }).rev_iter_mut() }
     }
 
+    fn iter_mut_dir<D: Direction>(&mut self) -> IterMut<K, V, D> {
+        IterMut {
+            stack: vec![],
+            node: deref_mut(&mut self.root),
+            direction: PhantomData,
+        }
+    }
+
     /// Gets a lazy forward iterator over the key-value pairs in the
     /// map, with the values being mutable.
     ///
@@ -345,11 +353,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&"c"), Some(&3));
     /// ```
     pub fn iter_mut(&mut self) -> IterMut<K, V, Forward> {
-        IterMut {
-            stack: vec![],
-            node: deref_mut(&mut self.root),
-            direction: PhantomData,
-        }
+        self.iter_mut_dir()
     }
 
     /// Gets a lazy reverse iterator over the key-value pairs in the
@@ -375,11 +379,7 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map.get(&"c"), Some(&13));
     /// ```
     pub fn rev_iter_mut(&mut self) -> IterMut<K, V, Backward> {
-        IterMut {
-            stack: vec![],
-            node: deref_mut(&mut self.root),
-            direction: PhantomData,
-        }
+        self.iter_mut_dir()
     }
 
     /// Gets a lazy iterator that consumes the treemap.
@@ -838,6 +838,129 @@ impl<K, V, C> TreeMap<K, V, C>
                     k,
                     false)
     }
+
+    fn compare_bound<D, Q: ?Sized>(&self, bound: Bound<&Q>, key: &K) -> Ordering
+        where C: Compare<Q, K>,
+              D: Direction
+    {
+        if D::forward() {
+            match bound {
+                Bound::Unbounded => Less,
+                Bound::Included(k) => self.cmp.compare(k, key),
+                Bound::Excluded(k) => {
+                    match self.cmp.compare(k, key) {
+                        Less => Less,
+                        Greater | Equal => Greater,
+                    }
+                }
+            }
+        } else {
+            match bound {
+                Bound::Unbounded => Greater,
+                Bound::Included(k) => self.cmp.compare(k, key),
+                Bound::Excluded(k) => {
+                    match self.cmp.compare(k, key) {
+                        Less | Equal => Less,
+                        Greater => Greater,
+                    }
+                }
+            }
+        }
+    }
+
+    fn bound_setup<'a, D, Q: ?Sized>(&self,
+                                     mut iter: IterMut<'a, K, V, D>,
+                                     bound: Bound<&Q>)
+                                     -> IterMut<'a, K, V, D>
+        where C: Compare<Q, K>,
+              D: Direction
+    {
+        loop {
+            if !iter.node.is_null() {
+                let node_k = unsafe { &(*iter.node).key };
+                match self.compare_bound::<D, Q>(bound, node_k) {
+                    Less => iter.traverse_before(),
+                    Greater => iter.traverse_after(),
+                    Equal => {
+                        iter.traverse_complete();
+                        return iter;
+                    }
+                }
+            } else {
+                iter.traverse_complete();
+                return iter;
+            }
+        }
+    }
+
+    pub fn range_mut<'a, Min: ?Sized, Max: ?Sized>(&'a mut self,
+                                                   min: Bound<&Min>,
+                                                   max: Bound<&Max>)
+                                                   -> RangeMut<'a, K, V>
+        where C: Compare<Min, K> + Compare<Max, K>
+    {
+        let none = None;
+        let mut node = &self.root;
+        loop {
+            match node {
+                &None => {
+                    return RangeMut {
+                        start: (unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_dir(),
+                        end: (unsafe { &mut *(self as *const Self as *mut Self) }).iter_mut_dir(),
+                        empty: true,
+                    }
+                }
+                &Some(ref n) => {
+                    match (self.compare_bound::<Forward, Min>(min, &n.key),
+                           self.compare_bound::<Backward, Max>(max, &n.key)) {
+                        // If both endpoints are in the same subtree, descend into that subtree
+                        (Less, Less) => node = &n.left,
+                        (Greater, Greater) => node = &n.right,
+                        // If start endpoint is actually > the end endpoint, return empty iterator
+                        (Equal, Less) | (Greater, Less) | (Greater, Equal) => node = &none,
+                        (Less, Equal) | (Less, Greater) | (Equal, Equal) | (Equal, Greater) => {
+                            // We now know that the iterator will be non-empty.
+                            // Populate the iterators.
+                            let start: IterMut<K, V, Forward> = IterMut {
+                                stack: vec![],
+                                node: n.deref() as *const TreeNode<K, V> as *mut TreeNode<K, V>,
+                                direction: PhantomData,
+                            };
+                            let end: IterMut<K, V, Backward> = IterMut {
+                                stack: vec![],
+                                node: n.deref() as *const TreeNode<K, V> as *mut TreeNode<K, V>,
+                                direction: PhantomData,
+                            };
+                            return RangeMut {
+                                start: self.bound_setup(start, min),
+                                end: self.bound_setup(end, max),
+                                empty: false,
+                            };
+                        }
+                    };
+                }
+            }
+        }
+    }
+
+    pub fn range<'a, Min: ?Sized, Max: ?Sized>(&'a self,
+                                               min: Bound<&Min>,
+                                               max: Bound<&Max>)
+                                               -> Range<'a, K, V>
+        where C: Compare<Min, K> + Compare<Max, K>
+    {
+        Range { range: (unsafe { &mut *(self as *const Self as *mut Self) }).range_mut(min, max) }
+    }
+}
+
+pub struct RangeMut<'a, K: 'a, V: 'a> {
+    start: IterMut<'a, K, V, Forward>,
+    end: IterMut<'a, K, V, Backward>,
+    empty: bool,
+}
+
+pub struct Range<'a, K: 'a, V: 'a> {
+    range: RangeMut<'a, K, V>,
 }
 
 pub trait Direction {
@@ -902,30 +1025,35 @@ pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V, Forward>,
 impl<'a, K, V, D: Direction> IterMut<'a, K, V, D> {
     #[inline(always)]
     fn next_(&mut self) -> Option<(&'a K, &'a mut V)> {
-        loop {
-            if !self.node.is_null() {
-                let node = unsafe { &mut *self.node };
-                {
-                    let next_node = if D::forward() {
-                        &mut node.left
-                    } else {
-                        &mut node.right
-                    };
-                    self.node = deref_mut(next_node);
-                }
-                self.stack.push(node);
-            } else {
-                return self.stack.pop().map(|node| {
-                    let next_node = if D::forward() {
-                        &mut node.right
-                    } else {
-                        &mut node.left
-                    };
-                    self.node = deref_mut(next_node);
-                    (&node.key, &mut node.value)
-                });
+        self.normalize();
+        self.next_node()
+    }
+
+    fn normalize(&mut self) {
+        while !self.node.is_null() {
+            let node = unsafe { &mut *self.node };
+            {
+                let next_node = if D::forward() {
+                    &mut node.left
+                } else {
+                    &mut node.right
+                };
+                self.node = deref_mut(next_node);
             }
+            self.stack.push(node);
         }
+    }
+
+    fn next_node(&mut self) -> Option<(&'a K, &'a mut V)> {
+        return self.stack.pop().map(|node| {
+            let next_node = if D::forward() {
+                &mut node.right
+            } else {
+                &mut node.left
+            };
+            self.node = deref_mut(next_node);
+            (&node.key, &mut node.value)
+        });
     }
 
     /// traverse_left, traverse_right and traverse_complete are
@@ -955,6 +1083,24 @@ impl<'a, K, V, D: Direction> IterMut<'a, K, V, D> {
     }
 
     #[inline]
+    fn traverse_before(&mut self) {
+        let node = unsafe { &mut *self.node };
+        self.node = deref_mut(&mut node.left);
+        if D::forward() {
+            self.stack.push(node);
+        }
+    }
+
+    #[inline]
+    fn traverse_after(&mut self) {
+        let node = unsafe { &mut *self.node };
+        self.node = deref_mut(&mut node.right);
+        if !D::forward() {
+            self.stack.push(node);
+        }
+    }
+
+    #[inline]
     fn traverse_complete(&mut self) {
         if !self.node.is_null() {
             unsafe {
@@ -980,13 +1126,60 @@ impl<'a, K, V, D: Direction> Iterator for IterMut<'a, K, V, D> {
     }
 }
 
+impl<'a, K, V> Iterator for RangeMut<'a, K, V> {
+    type Item = (&'a K, &'a mut V);
+    fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
+        if self.empty {
+            return None;
+        }
+        self.start.normalize();
+        self.end.normalize();
+        self.empty = match (self.start.stack.last(), self.end.stack.last()) {
+            (None, _) | (_, None) => true,
+            (Some(n1), Some(n2)) => *n1 as *const TreeNode<K, V> == *n2 as *const TreeNode<K, V>,
+        };
+        self.start.next_node()
+    }
+}
+
+impl<'a, K, V> DoubleEndedIterator for RangeMut<'a, K, V> {
+    fn next_back(&mut self) -> Option<(&'a K, &'a mut V)> {
+        if self.empty {
+            return None;
+        }
+        self.start.normalize();
+        self.end.normalize();
+        self.empty = match (self.start.stack.last(), self.end.stack.last()) {
+            (None, _) | (_, None) => true,
+            (Some(n1), Some(n2)) => *n1 as *const TreeNode<K, V> == *n2 as *const TreeNode<K, V>,
+        };
+        self.end.next_node()
+    }
+}
+
+impl<'a, K, V> Iterator for Range<'a, K, V> {
+    type Item = (&'a K, &'a V);
+    fn next(&mut self) -> Option<(&'a K, &'a V)> {
+        self.range.next().map(|o| match o {
+            (k, v) => (k, &*v),
+        })
+    }
+}
+
+impl<'a, K, V> DoubleEndedIterator for Range<'a, K, V> {
+    fn next_back(&mut self) -> Option<(&'a K, &'a V)> {
+        self.range.next_back().map(|o| match o {
+            (k, v) => (k, &*v),
+        })
+    }
+}
+
 impl<'a, K, V, D: Direction> Iterator for Iter<'a, K, V, D> {
     type Item = (&'a K, &'a V);
     fn next(&mut self) -> Option<(&'a K, &'a V)> {
-        match self.iter_mut.next_() {
-            Some((k, v)) => Some((k, &*v)),
-            None => None,
-        }
+        self.iter_mut.next_().map(|o| match o {
+            (k, v) => (k, &*v),
+        })
     }
 
     #[inline]
@@ -1357,6 +1550,7 @@ mod test_treemap {
     use rand::{self, Rng};
 
     use super::{TreeMap, TreeNode};
+    use super::super::Bound;
 
     #[test]
     fn find_empty() {
@@ -1703,14 +1897,26 @@ mod test_treemap {
     }
 
     #[test]
+    fn test_range() {
+        let mut m = TreeMap::new();
+        for i in 0..5 {
+            assert!(m.insert(i, 100 * i).is_none());
+        }
+
+        let v1 = m.range(Bound::Unbounded, Bound::Unbounded)
+            .map(|o| match o {
+                (_, &v) => v,
+            })
+            .collect::<Vec<i32>>();
+        assert_eq!(v1, vec![0, 100, 200, 300, 400]);
+    }
+
+    #[test]
     fn test_keys() {
         let vec = vec![(1, 'a'), (2, 'b'), (3, 'c')];
         let map: TreeMap<i32, char> = vec.into_iter().collect();
         let keys: Vec<i32> = map.keys().map(|&k| k).collect();
-        assert_eq!(keys.len(), 3);
-        assert!(keys.contains(&1));
-        assert!(keys.contains(&2));
-        assert!(keys.contains(&3));
+        assert_eq!(keys, vec![1, 2, 3]);
     }
 
     #[test]
@@ -1718,10 +1924,7 @@ mod test_treemap {
         let vec = vec![(1, 'a'), (2, 'b'), (3, 'c')];
         let map = vec.into_iter().collect::<TreeMap<i32, char>>();
         let values = map.values().map(|&v| v).collect::<Vec<char>>();
-        assert_eq!(values.len(), 3);
-        assert!(values.contains(&'a'));
-        assert!(values.contains(&'b'));
-        assert!(values.contains(&'c'));
+        assert_eq!(values, vec!['a', 'b', 'c']);
     }
 
     #[test]

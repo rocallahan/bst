@@ -44,3 +44,14 @@ pub use set::TreeSet;
 
 pub mod map;
 pub mod set;
+
+/// An endpoint of a range of keys.
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum Bound<T> {
+    /// An inclusive bound.
+    Included(T),
+    /// An exclusive bound.
+    Excluded(T),
+    /// An infinite endpoint. Indicates that there is no bound in this direction.
+    Unbounded,
+}
