@@ -16,7 +16,8 @@ use std::hash::{Hash, Hasher};
 use std::ops;
 
 use compare::{Compare, Natural, natural};
-use super::map::{self, Forward, Backward, TreeMap};
+use super::map::{self, Forward, TreeMap};
+use super::Bound;
 
 // FIXME(conventions): implement bounded iterators
 // FIXME(conventions): replace rev_iter(_mut) by making iter(_mut) DoubleEnded
@@ -198,6 +199,35 @@ impl<T, C> TreeSet<T, C>
         let first: fn((T, ())) -> T = first; // coerce to fn pointer
 
         IntoIter(self.map.into_iter().map(first))
+    }
+
+    /// Constructs a double-ended iterator over a sub-range of elements in the set, starting
+    /// at min, and ending at max. If min is `Unbounded`, then it will be treated as "negative
+    /// infinity", and if max is `Unbounded`, then it will be treated as "positive infinity".
+    /// Thus range(Unbounded, Unbounded) will yield the whole collection.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use stable_bst::TreeSet;
+    /// use stable_bst::Bound::{Included, Unbounded};
+    ///
+    /// let mut set = TreeSet::new();
+    /// set.insert(3);
+    /// set.insert(5);
+    /// set.insert(8);
+    /// for &elem in set.range(Included(&4), Included(&8)) {
+    ///     println!("{}", elem);
+    /// }
+    /// assert_eq!(Some(&5), set.range(Included(&4), Unbounded).next());
+    /// ```
+    pub fn range<'a, Min: ?Sized, Max: ?Sized>(&'a self,
+                                               min: Bound<&Min>,
+                                               max: Bound<&Max>)
+                                               -> Range<'a, T>
+        where C: Compare<Min, T> + Compare<Max, T>
+    {
+        Range { range: self.map.range(min, max) }
     }
 
     /// Visits the values representing the difference, in ascending order.
@@ -539,9 +569,8 @@ pub struct Iter<'a, T: 'a> {
     iter: map::Iter<'a, T, (), Forward>,
 }
 
-/// A lazy backward iterator over a set.
-pub struct RevIter<'a, T: 'a> {
-    iter: map::Iter<'a, T, (), Backward>,
+pub struct Range<'a, T: 'a> {
+    range: map::Range<'a, T, ()>,
 }
 
 /// A lazy forward iterator over a set that consumes the set while iterating.
@@ -589,7 +618,6 @@ fn cmp_opt<T, C: Compare<T>>(x: Option<&&T>,
     }
 }
 
-
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     #[inline]
@@ -602,15 +630,18 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-impl<'a, T> Iterator for RevIter<'a, T> {
+impl<'a, T> Iterator for Range<'a, T> {
     type Item = &'a T;
     #[inline]
     fn next(&mut self) -> Option<&'a T> {
-        self.iter.next().map(|(value, _)| value)
+        self.range.next().map(|(value, _)| value)
     }
+}
+
+impl<'a, T> DoubleEndedIterator for Range<'a, T> {
     #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.iter.size_hint()
+    fn next_back(&mut self) -> Option<&'a T> {
+        self.range.next_back().map(|(value, _)| value)
     }
 }
 
