@@ -519,11 +519,12 @@ impl<K, V, C> TreeMap<K, V, C>
     /// assert_eq!(map[&37], "c");
     /// ```
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
-        let ret = insert(&mut self.root, key, value, &self.cmp);
-        if ret.is_none() {
-            self.length += 1
+        let mut val = Some(value);
+        let ret = self.get_or_insert(key, || val.take().unwrap());
+        match val {
+            None => None,
+            Some(val) => Some(replace(ret, val)),
         }
-        ret
     }
 
     /// Removes a key from the map, returning the value at the key if the key
@@ -550,6 +551,30 @@ impl<K, V, C> TreeMap<K, V, C>
             self.length -= 1
         }
         ret
+    }
+
+    /// If a value for `key` does not exist, create one by callling `default`.
+    /// Returns a mut reference to the new or existing value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use stable_bst::TreeMap;
+    ///
+    /// let mut count: TreeMap<&str, usize> = TreeMap::new();
+    ///
+    /// // count the number of occurrences of letters in the vec
+    /// for x in vec!["a","b","a","c","a","b"] {
+    ///     *count.get_or_insert(x, || 0) += 1;
+    /// }
+    /// assert_eq!(count[&"a"], 3);
+    /// ```
+    pub fn get_or_insert<F>(&mut self, key: K, default: F) -> &mut V
+        where F: FnOnce() -> V
+    {
+        let (inserted, ret) = insert(&mut self.root, key, default, &self.cmp);
+        self.length += inserted;
+        unsafe { &mut *ret }
     }
 
     /// Returns the value for which `f(key)` returns `Equal`. `f` is invoked
@@ -1149,31 +1174,38 @@ fn tree_find_with_mut<K, V, F>(node: &mut Option<Box<TreeNode<K, V>>>, mut f: F)
     }
 }
 
-fn insert<K, V, C>(node: &mut Option<Box<TreeNode<K, V>>>, key: K, value: V, cmp: &C) -> Option<V>
-    where C: Compare<K>
+fn insert<'a, K, V, F, C>(node: &'a mut Option<Box<TreeNode<K, V>>>,
+                          key: K,
+                          default: F,
+                          cmp: &C)
+                          -> (usize, *mut V)
+    where C: Compare<K>,
+          K: 'a,
+          V: 'a,
+          F: FnOnce() -> V
 {
 
     match *node {
         Some(ref mut save) => {
             match cmp.compare(&key, &save.key) {
                 Less => {
-                    let inserted = insert(&mut save.left, key, value, cmp);
+                    let ret = insert(&mut save.left, key, default, cmp);
                     skew(save);
                     split(save);
-                    inserted
+                    ret
                 }
                 Greater => {
-                    let inserted = insert(&mut save.right, key, value, cmp);
+                    let ret = insert(&mut save.right, key, default, cmp);
                     skew(save);
                     split(save);
-                    inserted
+                    ret
                 }
-                Equal => Some(replace(&mut save.value, value)),
+                Equal => (0, &mut save.value),
             }
         }
         None => {
-            *node = Some(Box::new(TreeNode::new(key, value)));
-            None
+            *node = Some(Box::new(TreeNode::new(key, default())));
+            (1, &mut node.as_mut().unwrap().value)
         }
     }
 }
@@ -1422,6 +1454,16 @@ mod test_treemap {
         assert!(m.insert(2, 9).is_none());
         assert!(!m.insert(2, 11).is_none());
         assert_eq!(m.get(&2).unwrap(), &11);
+    }
+
+    #[test]
+    fn test_get_or_insert() {
+        let mut m = TreeMap::new();
+        assert_eq!(*m.get_or_insert(5, || 2), 2);
+        assert_eq!(*m.get_or_insert(2, || 9), 9);
+        assert_eq!(*m.get_or_insert(2, || 7), 9);
+        *m.get_or_insert(2, || 7) = 8;
+        assert_eq!(*m.get(&2).unwrap(), 8);
     }
 
     #[test]
