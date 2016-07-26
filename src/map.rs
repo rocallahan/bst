@@ -282,6 +282,37 @@ impl<K, V, C> TreeMap<K, V, C>
         Values(self.iter().map(second))
     }
 
+    /// Gets a lazy iterator over the values in the map, in ascending order
+    /// with respect to the corresponding keys, returning a mutable reference
+    /// to each value.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use stable_bst::TreeMap;
+    /// let mut map = TreeMap::new();
+    /// map.insert("a", 1);
+    /// map.insert("c", 3);
+    /// map.insert("b", 2);
+    ///
+    /// for x in map.values_mut() {
+    ///     *x += 1;
+    /// }
+    ///
+    /// // Print 2, 3, 4 ordered by keys.
+    /// for x in map.values() {
+    ///     println!("{}", x);
+    /// }
+    /// ```
+    pub fn values_mut<'a>(&'a mut self) -> ValuesMut<'a, K, V> {
+        fn second<A, B>((_, b): (A, B)) -> B {
+            b
+        }
+        let second: fn((&'a K, &'a mut V)) -> &'a mut V = second; // coerce to fn pointer
+
+        ValuesMut(self.iter_mut().map(second))
+    }
+
     /// Gets a lazy iterator over the key-value pairs in the map, in ascending order.
     ///
     /// # Examples
@@ -868,6 +899,10 @@ pub struct Keys<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V, Forward>, fn((&'a K, 
 pub struct Values<'a, K: 'a, V: 'a>(iter::Map<Iter<'a, K, V, Forward>,
                                               fn((&'a K, &'a V)) -> &'a V>);
 
+/// TreeMap values iterator.
+pub struct ValuesMut<'a, K: 'a, V: 'a>(iter::Map<IterMut<'a, K, V, Forward>,
+                                                 fn((&'a K, &'a mut V)) -> &'a mut V>);
+
 impl<'a, K, V, D: Direction> IterMut<'a, K, V, D> {
     #[inline(always)]
     fn next_(&mut self) -> Option<(&'a K, &'a mut V)> {
@@ -1083,6 +1118,17 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     }
 }
 
+impl<'a, K, V> Iterator for ValuesMut<'a, K, V> {
+    type Item = &'a mut V;
+    #[inline]
+    fn next(&mut self) -> Option<&'a mut V> {
+        self.0.next()
+    }
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
 
 // Nodes keep track of their level in the tree, starting at 1 in the
 // leaves and with a red child sharing the level of the parent.
@@ -1843,6 +1889,17 @@ mod test_treemap {
         let map = vec.into_iter().collect::<TreeMap<i32, char>>();
         let values = map.values().map(|&v| v).collect::<Vec<char>>();
         assert_eq!(values, vec!['a', 'b', 'c']);
+    }
+
+    #[test]
+    fn test_values_mut() {
+        let vec = vec![(1, 'a'), (2, 'b'), (3, 'c')];
+        let mut map = vec.into_iter().collect::<TreeMap<i32, char>>();
+        for ch in map.values_mut() {
+            *ch = 'x';
+        }
+        let values = map.values().map(|&v| v).collect::<Vec<char>>();
+        assert_eq!(values, vec!['x', 'x', 'x']);
     }
 
     #[test]
